@@ -98,7 +98,7 @@ export class UpdateManagerV2 {
             if (window.__TAURI__?.app?.getVersion) {
                 return await window.__TAURI__.app.getVersion();
             }
-            
+
             if (window.__TAURI__?.core?.invoke) {
                 return await window.__TAURI__.core.invoke('plugin:app|version');
             }
@@ -141,7 +141,7 @@ export class UpdateManagerV2 {
     enableTestMode() {
         localStorage.setItem('presto_force_update_test', 'true');
         console.warn('⚠️ MODALITÀ TEST AGGIORNAMENTI ATTIVATA');
-        
+
         if (!this.isDevelopmentMode() && this.autoCheck && !this.checkInterval) {
             this.startAutoCheck();
         }
@@ -171,7 +171,7 @@ export class UpdateManagerV2 {
             if (window.__TAURI__?.dialog?.message) {
                 return await window.__TAURI__.dialog.message(content, options);
             }
-            
+
             if (window.__TAURI__?.core?.invoke) {
                 return await window.__TAURI__.core.invoke('plugin:dialog|message', {
                     message: content,
@@ -195,7 +195,7 @@ export class UpdateManagerV2 {
             if (window.__TAURI__?.dialog?.ask) {
                 return await window.__TAURI__.dialog.ask(content, options);
             }
-            
+
             if (window.__TAURI__?.core?.invoke) {
                 return await window.__TAURI__.core.invoke('plugin:dialog|ask', {
                     message: content,
@@ -260,7 +260,7 @@ export class UpdateManagerV2 {
     compareVersions(a, b) {
         const cleanA = a.replace(/^v/, '');
         const cleanB = b.replace(/^v/, '');
-        
+
         const aParts = cleanA.split('.').map(n => parseInt(n) || 0);
         const bParts = cleanB.split('.').map(n => parseInt(n) || 0);
 
@@ -312,7 +312,7 @@ export class UpdateManagerV2 {
             // 1. Controlla GitHub API per vedere se c'è una nuova versione
             // 2. Se c'è, prova l'API Tauri per download automatico
             // 3. Se fallisce, offre download manuale
-            
+
             const currentVersion = await this.getAppVersion();
             console.log('📋 Versione corrente:', currentVersion);
 
@@ -325,7 +325,7 @@ export class UpdateManagerV2 {
 
             const githubRelease = await response.json();
             const latestVersion = githubRelease.tag_name.replace(/^v/, '');
-            
+
             console.log('📦 Ultima versione su GitHub:', latestVersion);
 
             // Confronta versioni
@@ -354,7 +354,7 @@ export class UpdateManagerV2 {
                 if (updaterAPI) {
                     console.log('🔍 Provo API Tauri...');
                     tauriUpdate = await updaterAPI.check();
-                    
+
                     if (tauriUpdate?.available) {
                         console.log('✅ Confermato con API Tauri:', tauriUpdate.version);
                         this.updateAvailable = true;
@@ -374,7 +374,7 @@ export class UpdateManagerV2 {
             // Se l'API Tauri non funziona, crea update manuale
             console.log('📋 Creo aggiornamento manuale...');
             const manualUpdate = this.createManualUpdateFromGitHub(githubRelease);
-            
+
             this.updateAvailable = true;
             this.currentUpdate = manualUpdate;
             this.emit('updateAvailable', manualUpdate);
@@ -406,12 +406,12 @@ export class UpdateManagerV2 {
      * Crea un oggetto update manuale da una risposta GitHub
      */
     createManualUpdateFromGitHub(githubRelease) {
-        const macosAsset = githubRelease.assets?.find(asset => 
-            asset.name.includes('.app.tar.gz') && 
+        const macosAsset = githubRelease.assets?.find(asset =>
+            asset.name.includes('.app.tar.gz') &&
             !asset.name.includes('.sig')
         );
 
-        const dmgAsset = githubRelease.assets?.find(asset => 
+        const dmgAsset = githubRelease.assets?.find(asset =>
             asset.name.includes('.dmg')
         );
 
@@ -424,23 +424,23 @@ export class UpdateManagerV2 {
             body: githubRelease.body || 'Nessuna nota di rilascio disponibile',
             downloadAndInstall: async (progressCallback) => {
                 console.log('📥 Avvio download manuale...');
-                
+
                 if (progressCallback) {
                     progressCallback({ event: 'Started', data: { contentLength: 0 } });
                 }
-                
+
                 await this.showMessage(
                     'Download manuale richiesto.\n\nL\'aggiornamento automatico non è disponibile. Verrà aperta la pagina di download.',
                     { title: 'Download Manuale', kind: 'info' }
                 );
-                
+
                 // Apri la pagina di download
                 if (downloadUrl) {
                     await this.openURL(downloadUrl);
                 } else {
                     await this.openReleasePage();
                 }
-                
+
                 if (progressCallback) {
                     progressCallback({ event: 'Finished', data: {} });
                 }
@@ -458,7 +458,7 @@ export class UpdateManagerV2 {
 
         const currentVersion = await this.getAppVersion();
         const simulatedNewVersion = this.incrementVersion(currentVersion);
-        
+
         const update = {
             available: true,
             version: simulatedNewVersion,
@@ -561,9 +561,9 @@ export class UpdateManagerV2 {
                 switch (event.event) {
                     case 'Started':
                         console.log('📥 Download iniziato');
-                        this.emit('downloadProgress', { 
-                            progress: 0, 
-                            contentLength: event.data.contentLength 
+                        this.emit('downloadProgress', {
+                            progress: 0,
+                            contentLength: event.data.contentLength
                         });
                         break;
                     case 'Progress':
@@ -828,7 +828,7 @@ export class UpdateManagerV2 {
     enableTestMode() {
         localStorage.setItem('presto_force_update_test', 'true');
         console.warn('⚠️ MODALITÀ TEST AGGIORNAMENTI ATTIVATA');
-        
+
         if (!this.isDevelopmentMode() && this.autoCheck && !this.checkInterval) {
             this.startAutoCheck();
         }
@@ -924,14 +924,14 @@ export class UpdateManagerV2 {
      */
     convertGitHubResponseToTauriFormat(githubResponse) {
         console.log('🔄 Conversione formato GitHub → Tauri');
-        
+
         // Trova l'asset per macOS
-        const macosAsset = githubResponse.assets?.find(asset => 
-            asset.name.includes('.app.tar.gz') && 
+        const macosAsset = githubResponse.assets?.find(asset =>
+            asset.name.includes('.app.tar.gz') &&
             !asset.name.includes('.sig')
         );
 
-        const macosSignature = githubResponse.assets?.find(asset => 
+        const macosSignature = githubResponse.assets?.find(asset =>
             asset.name.includes('.app.tar.gz.sig')
         );
 
@@ -1000,7 +1000,7 @@ export class UpdateManagerV2 {
             // APPROCCIO IBRIDO: 
             // 1. Prima controlla GitHub API per vedere se c'è una nuova versione
             // 2. Se c'è, usa l'API Tauri solo per il download/install
-            
+
             const currentVersion = await this.getCurrentVersion();
             console.log('📋 Versione corrente:', currentVersion);
 
@@ -1012,7 +1012,7 @@ export class UpdateManagerV2 {
 
             const githubRelease = await response.json();
             const latestVersion = githubRelease.tag_name.replace(/^v/, '');
-            
+
             console.log('📦 Ultima versione su GitHub:', latestVersion);
 
             // Confronta versioni
@@ -1037,7 +1037,7 @@ export class UpdateManagerV2 {
             try {
                 // Prova prima con l'API ufficiale Tauri
                 const update = await check();
-                
+
                 if (update?.available) {
                     console.log('✅ Confermato con API Tauri:', update.version);
                     this.updateAvailable = true;
@@ -1051,10 +1051,10 @@ export class UpdateManagerV2 {
                 }
             } catch (tauriError) {
                 console.warn('⚠️ API Tauri fallita, creo update manuale:', tauriError);
-                
+
                 // Se l'API Tauri fallisce, crea un oggetto update manuale
                 const manualUpdate = this.createManualUpdateFromGitHub(githubRelease);
-                
+
                 this.updateAvailable = true;
                 this.currentUpdate = manualUpdate;
                 this.emit('updateAvailable', manualUpdate);
@@ -1091,8 +1091,8 @@ export class UpdateManagerV2 {
      * Crea un oggetto update manuale da una risposta GitHub
      */
     createManualUpdateFromGitHub(githubRelease) {
-        const macosAsset = githubRelease.assets?.find(asset => 
-            asset.name.includes('.app.tar.gz') && 
+        const macosAsset = githubRelease.assets?.find(asset =>
+            asset.name.includes('.app.tar.gz') &&
             !asset.name.includes('.sig')
         );
 
@@ -1105,19 +1105,19 @@ export class UpdateManagerV2 {
                 if (progressCallback) {
                     progressCallback({ event: 'Started', data: { contentLength: 0 } });
                 }
-                
+
                 await this.showMessage(
                     'Download manuale richiesto.\n\nL\'aggiornamento automatico non è disponibile. Verrà aperta la pagina di download.',
                     { title: 'Download Manuale', kind: 'info' }
                 );
-                
+
                 // Apri la pagina di download
                 if (macosAsset) {
                     await this.openURL(macosAsset.browser_download_url);
                 } else {
                     await this.openReleasePage();
                 }
-                
+
                 if (progressCallback) {
                     progressCallback({ event: 'Finished', data: {} });
                 }
@@ -1131,7 +1131,7 @@ export class UpdateManagerV2 {
     compareVersions(a, b) {
         const cleanA = a.replace(/^v/, '');
         const cleanB = b.replace(/^v/, '');
-        
+
         const aParts = cleanA.split('.').map(n => parseInt(n) || 0);
         const bParts = cleanB.split('.').map(n => parseInt(n) || 0);
 
@@ -1156,7 +1156,7 @@ export class UpdateManagerV2 {
 
         const currentVersion = await this.getCurrentVersion();
         const simulatedNewVersion = this.incrementVersion(currentVersion);
-        
+
         const update = {
             available: true,
             version: simulatedNewVersion,
@@ -1259,9 +1259,9 @@ export class UpdateManagerV2 {
                 switch (event.event) {
                     case 'Started':
                         console.log('📥 Download iniziato');
-                        this.emit('downloadProgress', { 
-                            progress: 0, 
-                            contentLength: event.data.contentLength 
+                        this.emit('downloadProgress', {
+                            progress: 0,
+                            contentLength: event.data.contentLength
                         });
                         break;
                     case 'Progress':

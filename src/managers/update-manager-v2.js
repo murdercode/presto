@@ -239,7 +239,7 @@ export class UpdateManagerV2 {
             this.emit('checkError', error);
 
             let errorMessage = 'Errore durante il controllo degli aggiornamenti.';
-            
+
             if (error?.message) {
                 if (error.message.includes('network') || error.message.includes('request')) {
                     errorMessage = 'Errore di rete. Verifica la connessione Internet e riprova.';
@@ -279,9 +279,9 @@ export class UpdateManagerV2 {
 
             // Simula controllo con versione fittizia più alta
             const simulatedNewVersion = this.incrementVersion(currentVersion);
-            
+
             console.log(`✅ Simulazione: Aggiornamento disponibile! ${currentVersion} → ${simulatedNewVersion}`);
-            
+
             const update = {
                 available: true,
                 version: simulatedNewVersion,
@@ -351,9 +351,9 @@ export class UpdateManagerV2 {
                 switch (event.event) {
                     case 'Started':
                         console.log('📥 Download iniziato');
-                        this.emit('downloadProgress', { 
-                            progress: 0, 
-                            contentLength: event.data.contentLength 
+                        this.emit('downloadProgress', {
+                            progress: 0,
+                            contentLength: event.data.contentLength
                         });
                         break;
                     case 'Progress':
@@ -443,7 +443,7 @@ export class UpdateManagerV2 {
         }
 
         console.log('🧪 Simulazione download completato!');
-        
+
         // Simula riavvio
         await this.showMessage('🧪 MODALITÀ TEST: In un\'app vera, ora verrebbe riavviata automaticamente.', {
             title: 'Simulazione Riavvio',

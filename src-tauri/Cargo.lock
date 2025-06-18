@@ -3040,7 +3040,7 @@ checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
 name = "presto"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "core-foundation 0.9.4",
  "core-graphics 0.23.2",
