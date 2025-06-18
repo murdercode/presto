@@ -271,6 +271,9 @@ export class SettingsManager {
             });
         }
 
+        // Audio detection listeners
+        this.setupAudioDetectionListeners();
+
         // Setup auto-save listeners for all settings fields
         this.setupAutoSaveListeners();
     }
@@ -283,6 +286,210 @@ export class SettingsManager {
             } else {
                 timeoutSetting.classList.remove('visible');
             }
+        }
+    }
+
+    setupAudioDetectionListeners() {
+        // Audio detection enable/disable checkbox
+        const audioDetectionCheckbox = document.getElementById('audio-detection-enabled');
+        if (audioDetectionCheckbox) {
+            audioDetectionCheckbox.addEventListener('change', async (e) => {
+                if (e.target.checked) {
+                    try {
+                        await this.startAudioDetection();
+                    } catch (error) {
+                        console.error('Failed to start audio detection:', error);
+                        e.target.checked = false;
+                        alert('Failed to start audio detection. Make sure you have granted microphone permissions.');
+                    }
+                } else {
+                    await this.stopAudioDetection();
+                }
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Detection sensitivity slider
+        const sensitivitySlider = document.getElementById('detection-sensitivity');
+        const sensitivityValue = document.getElementById('sensitivity-value');
+        if (sensitivitySlider && sensitivityValue) {
+            sensitivitySlider.addEventListener('input', (e) => {
+                sensitivityValue.textContent = e.target.value;
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Audio detection control buttons
+        const startButton = document.getElementById('start-audio-detection');
+        const stopButton = document.getElementById('stop-audio-detection');
+        const testButton = document.getElementById('test-audio-detection');
+
+        if (startButton) {
+            startButton.addEventListener('click', async () => {
+                try {
+                    await this.startAudioDetection();
+                    document.getElementById('audio-detection-enabled').checked = true;
+                } catch (error) {
+                    console.error('Failed to start audio detection:', error);
+                    alert('Failed to start audio detection. Please check your microphone permissions.');
+                }
+            });
+        }
+
+        if (stopButton) {
+            stopButton.addEventListener('click', async () => {
+                await this.stopAudioDetection();
+                document.getElementById('audio-detection-enabled').checked = false;
+            });
+        }
+
+        if (testButton) {
+            testButton.addEventListener('click', async () => {
+                await this.testAudioDetection();
+            });
+        }
+
+        // Setup status monitoring if conversation manager is available
+        if (window.conversationManager) {
+            this.setupAudioStatusMonitoring();
+        }
+    }
+
+    async startAudioDetection() {
+        if (!window.conversationManager) {
+            throw new Error('Conversation manager not available');
+        }
+
+        try {
+            await window.conversationManager.startMonitoring();
+            this.updateAudioDetectionButtons(true);
+            this.updateAudioDetectionStatus();
+            console.log('✅ Audio detection started successfully');
+        } catch (error) {
+            console.error('❌ Failed to start audio detection:', error);
+            throw error;
+        }
+    }
+
+    async stopAudioDetection() {
+        if (!window.conversationManager) {
+            return;
+        }
+
+        try {
+            await window.conversationManager.stopMonitoring();
+            this.updateAudioDetectionButtons(false);
+            this.resetAudioDetectionStatus();
+            console.log('✅ Audio detection stopped successfully');
+        } catch (error) {
+            console.error('❌ Failed to stop audio detection:', error);
+        }
+    }
+
+    async testAudioDetection() {
+        try {
+            const testResult = await window.conversationManager.testAudioDetection();
+
+            // Show test results in an alert
+            const formatted = window.conversationManager.formatActivity(testResult);
+            alert(`Audio Detection Test Results:\n\n${formatted}\n\nThis is a quick test of your audio setup.`);
+
+        } catch (error) {
+            console.error('❌ Audio detection test failed:', error);
+            alert('Audio detection test failed. Please check your audio setup and permissions.');
+        }
+    }
+
+    updateAudioDetectionButtons(isRunning) {
+        const startButton = document.getElementById('start-audio-detection');
+        const stopButton = document.getElementById('stop-audio-detection');
+
+        if (startButton && stopButton) {
+            startButton.disabled = isRunning;
+            stopButton.disabled = !isRunning;
+        }
+    }
+
+    setupAudioStatusMonitoring() {
+        // Set up real-time status updates
+        window.conversationManager.onStatusChange((activity) => {
+            this.updateAudioStatusDisplay(activity);
+        });
+
+        // Update status immediately if monitoring is active
+        if (window.conversationManager.getMonitoringInfo().isMonitoring) {
+            this.updateAudioDetectionButtons(true);
+            this.updateAudioDetectionStatus();
+        }
+    }
+
+    updateAudioStatusDisplay(activity) {
+        const monitoringStatus = document.getElementById('monitoring-status');
+        const micStatus = document.getElementById('mic-status');
+        const speakerStatus = document.getElementById('speaker-status');
+        const conversationStatus = document.getElementById('conversation-status');
+        const confidenceLevel = document.getElementById('confidence-level');
+
+        if (monitoringStatus) {
+            monitoringStatus.textContent = window.conversationManager.isMonitoring ? '🟢 Active' : '🔴 Stopped';
+            monitoringStatus.className = window.conversationManager.isMonitoring ? 'status-value active' : 'status-value inactive';
+        }
+
+        if (micStatus) {
+            const isActive = activity.is_microphone_active;
+            micStatus.textContent = isActive ? `🎤 Active (${(activity.input_level * 100).toFixed(1)}%)` : '🔇 Inactive';
+            micStatus.className = isActive ? 'status-value active' : 'status-value inactive';
+        }
+
+        if (speakerStatus) {
+            const isActive = activity.is_speakers_active;
+            speakerStatus.textContent = isActive ? `🔊 Active (${(activity.output_level * 100).toFixed(1)}%)` : '🔇 Inactive';
+            speakerStatus.className = isActive ? 'status-value active' : 'status-value inactive';
+        }
+
+        if (conversationStatus) {
+            const inConversation = activity.is_microphone_active && activity.is_speakers_active;
+            conversationStatus.textContent = inConversation ? '✅ Yes' : '❌ No';
+            conversationStatus.className = inConversation ? 'status-value conversation-active' : 'status-value inactive';
+        }
+
+        if (confidenceLevel) {
+            const confidence = Math.round(activity.confidence * 100);
+            confidenceLevel.textContent = `${confidence}%`;
+            confidenceLevel.className = confidence > 70 ? 'status-value active' : 'status-value';
+        }
+    }
+
+    async updateAudioDetectionStatus() {
+        if (!window.conversationManager || !window.conversationManager.isMonitoring) {
+            this.resetAudioDetectionStatus();
+            return;
+        }
+
+        try {
+            const activity = await window.conversationManager.getStatus();
+            if (activity) {
+                this.updateAudioStatusDisplay(activity);
+            }
+        } catch (error) {
+            console.error('Failed to get audio status:', error);
+        }
+    }
+
+    resetAudioDetectionStatus() {
+        const defaultActivity = {
+            is_microphone_active: false,
+            is_speakers_active: false,
+            input_level: 0.0,
+            output_level: 0.0,
+            confidence: 0.0
+        };
+        this.updateAudioStatusDisplay(defaultActivity);
+
+        const monitoringStatus = document.getElementById('monitoring-status');
+        if (monitoringStatus) {
+            monitoringStatus.textContent = '🔴 Stopped';
+            monitoringStatus.className = 'status-value inactive';
         }
     }
 
@@ -895,20 +1102,32 @@ export class SettingsManager {
         this.systemThemeListener = (e) => {
             const newSystemTheme = e.matches ? 'dark' : 'light';
             console.log(`🎨 System theme changed: ${newSystemTheme}`);
-            
+
             // Only apply if current preference is "auto"
             const currentPreference = this.settings?.appearance?.theme || 'auto';
             if (currentPreference === 'auto') {
                 const html = document.documentElement;
                 html.setAttribute('data-theme', newSystemTheme);
                 console.log(`🎨 Auto theme updated to: ${newSystemTheme}`);
-                
-                // Update timer theme compatibility when system theme changes
+
+                // Update timer theme compatibility
                 this.updateTimerThemeCompatibility();
             }
         };
 
         this.systemThemeMediaQuery.addEventListener('change', this.systemThemeListener);
+    }
+
+    updateTimerThemeCompatibility() {
+        // Aggiorna la compatibilità del tema timer quando cambia il tema dell'app
+        const currentTimerTheme = this.settings?.appearance?.timer_theme;
+        if (currentTimerTheme) {
+            const timerThemeGrid = document.getElementById('timer-theme-grid');
+            if (timerThemeGrid) {
+                // Ricarica il selettore dei temi timer per aggiornare la compatibilità
+                this.initializeTimerThemeSelector();
+            }
+        }
     }
 
     removeSystemThemeListener() {
@@ -938,7 +1157,7 @@ export class SettingsManager {
 
             // For non-auto themes, keep the early initialization
             console.log(`🎨 Keeping early initialized theme: ${currentTheme}`);
-            
+
             // Update settings to match current theme
             if (this.settings && this.settings.appearance) {
                 this.settings.appearance.theme = currentTheme;
@@ -1014,14 +1233,6 @@ export class SettingsManager {
         }
     }
 
-    // Timer Theme Management Functions
-    getCurrentColorMode() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        
-        // Since data-theme is now always 'light' or 'dark' (never 'auto'), this is simpler
-        return currentTheme === 'dark' ? 'dark' : 'light';
-    }
-
     async initializeTimerTheme() {
         // Check if timer theme was already initialized early
         const currentTimerTheme = document.documentElement.getAttribute('data-timer-theme');
@@ -1067,20 +1278,6 @@ export class SettingsManager {
         }
 
         console.log(`🎨 Timer theme applied: ${themeId}`);
-        console.log(`🎨 DOM attribute check: data-timer-theme="${html.getAttribute('data-timer-theme')}"`);
-
-        // Debug: Check CSS variable values
-        const computedStyle = getComputedStyle(html);
-        console.log(`🎨 CSS Variables check:`, {
-            focusColor: computedStyle.getPropertyValue('--focus-color').trim(),
-            focusBg: computedStyle.getPropertyValue('--focus-bg').trim(),
-            focusTimerColor: computedStyle.getPropertyValue('--focus-timer-color').trim()
-        });
-
-        // Force CSS recalculation
-        html.style.display = 'none';
-        html.offsetHeight; // Trigger reflow
-        html.style.display = '';
     }
 
     initializeTimerThemeSelector() {
@@ -1089,107 +1286,50 @@ export class SettingsManager {
             return; // Exit early if elements or settings not ready
         }
 
-        const currentColorMode = this.getCurrentColorMode();
         const currentTimerTheme = this.settings.appearance?.timer_theme || 'espresso';
 
         // Clear existing content
         timerThemeGrid.innerHTML = '';
 
-        // Get all themes
-        const themes = getAllThemes();
+        // Create basic timer theme options
+        const themes = [
+            { id: 'espresso', name: 'Espresso' },
+            { id: 'matrix', name: 'Matrix' },
+            { id: 'pommodore64', name: 'Commodore 64' }
+        ];
 
         themes.forEach(theme => {
-            const themeOption = this.createTimerThemeOption(theme, currentTimerTheme, currentColorMode);
+            const themeOption = this.createBasicTimerThemeOption(theme, currentTimerTheme);
             timerThemeGrid.appendChild(themeOption);
         });
     }
 
-    createTimerThemeOption(theme, currentTimerTheme, currentColorMode) {
+    createBasicTimerThemeOption(theme, currentTimerTheme) {
         const option = document.createElement('div');
         option.className = 'timer-theme-option';
         option.setAttribute('data-timer-theme', theme.id);
 
-        const isCompatible = isThemeCompatible(theme.id, currentColorMode);
         const isActive = theme.id === currentTimerTheme;
-
         if (isActive) option.classList.add('active');
-        if (!isCompatible) option.classList.add('disabled');
 
         option.innerHTML = `
             <div class="timer-theme-header">
                 <h4 class="timer-theme-name">${theme.name}</h4>
-                <div class="timer-theme-compatibility">
-                    ${theme.supports.map(mode => `
-                        <span class="compatibility-badge ${mode}">
-                            <i class="ri-${mode === 'light' ? 'sun' : 'moon'}-line"></i>
-                        </span>
-                    `).join('')}
-                </div>
             </div>
-            <p class="timer-theme-description">${theme.description}</p>
             <div class="timer-theme-preview">
                 <div class="timer-preview-display" data-preview-theme="${theme.id}">
                     <div class="timer-preview-time">25:00</div>
                     <div class="timer-preview-status">Focus Session</div>
                 </div>
-                <div class="color-preview-strip">
-                    <div class="preview-color" style="background-color: ${theme.preview.focus}">
-                    </div>
-                    <div class="preview-color" style="background-color: ${theme.preview.break}">
-                    </div>
-                    <div class="preview-color" style="background-color: ${theme.preview.longBreak}">
-                    </div>
-                </div>
             </div>
         `;
 
-        // Apply theme preview styles
-        this.applyThemePreviewStyles(option, theme);
-
-        // Add click handler (only if compatible)
-        if (isCompatible) {
-            option.addEventListener('click', async () => {
-                await this.selectTimerTheme(theme.id);
-            });
-        }
+        // Add click handler
+        option.addEventListener('click', async () => {
+            await this.selectTimerTheme(theme.id);
+        });
 
         return option;
-    }
-
-    applyThemePreviewStyles(optionElement, theme) {
-        const previewDisplay = optionElement.querySelector('.timer-preview-display');
-        const previewTime = optionElement.querySelector('.timer-preview-time');
-        const previewStatus = optionElement.querySelector('.timer-preview-status');
-
-        if (!previewDisplay || !previewTime || !previewStatus) return;
-
-        // Apply theme-specific styles to the preview
-        const themeId = theme.id;
-
-        // Set preview colors based on theme
-        previewTime.style.color = theme.preview.focus;
-        previewStatus.style.color = theme.preview.focus;
-
-        // Special handling for specific themes
-        if (themeId === 'matrix') {
-            previewDisplay.style.background = '#000011';
-            previewDisplay.style.border = `1px solid ${theme.preview.focus}`;
-            previewDisplay.style.fontFamily = '"Share Tech Mono", monospace';
-            previewTime.style.textShadow = `0 0 5px ${theme.preview.focus}`;
-            previewStatus.style.textShadow = `0 0 3px ${theme.preview.focus}`;
-        } else if (themeId === 'espresso') {
-            previewDisplay.style.background = '#3c2415';
-            previewDisplay.style.border = `1px solid ${theme.preview.focus}`;
-            previewDisplay.style.color = '#f4f1de';
-        } else if (themeId === 'pommodore64') {
-            previewDisplay.style.background = '#40318d';
-            previewDisplay.style.border = `1px solid ${theme.preview.focus}`;
-            previewDisplay.style.color = '#7b68ee';
-        } else {
-            // Default styling for other themes
-            previewDisplay.style.background = '#f8f9fa';
-            previewDisplay.style.border = `1px solid ${theme.preview.focus}`;
-        }
     }
 
     async selectTimerTheme(themeId) {
@@ -1205,60 +1345,8 @@ export class SettingsManager {
         try {
             await invoke('save_settings', { settings: this.settings });
             console.log(`🎨 Timer theme saved: ${themeId}`);
-
-            // Show feedback
-            NotificationUtils.showNotificationPing(`✓ Timer theme changed to ${getThemeById(themeId).name}`, 'success');
         } catch (error) {
             console.error('Failed to save timer theme setting:', error);
-            NotificationUtils.showNotificationPing('❌ Failed to save timer theme', 'error');
         }
-    }
-
-    updateTimerThemeSelector(themeId) {
-        const timerThemeGrid = document.getElementById('timer-theme-grid');
-        if (!timerThemeGrid) return;
-
-        // Remove active class from all options
-        const themeOptions = timerThemeGrid.querySelectorAll('.timer-theme-option');
-        themeOptions.forEach(option => {
-            option.classList.remove('active');
-        });
-
-        // Add active class to selected option
-        const activeOption = timerThemeGrid.querySelector(`[data-timer-theme="${themeId}"]`);
-        if (activeOption) {
-            activeOption.classList.add('active');
-        }
-    }
-
-    // Update timer theme selector when color mode changes
-    updateTimerThemeCompatibility() {
-        const timerThemeGrid = document.getElementById('timer-theme-grid');
-        if (!timerThemeGrid) return;
-
-        const currentColorMode = this.getCurrentColorMode();
-        const currentTimerTheme = this.settings.appearance?.timer_theme || 'espresso';
-
-        console.log(`🎨 Checking theme compatibility: ${currentTimerTheme} with mode ${currentColorMode}`);
-
-        // Check if current timer theme is still compatible
-        const isCompatible = isThemeCompatible(currentTimerTheme, currentColorMode);
-        console.log(`🎨 Theme ${currentTimerTheme} is compatible with ${currentColorMode}: ${isCompatible}`);
-
-        if (!isCompatible) {
-            console.log(`🎨 Theme ${currentTimerTheme} not compatible, switching to compatible theme...`);
-            // Switch to a compatible theme
-            const compatibleThemes = getCompatibleThemes(currentColorMode);
-            if (compatibleThemes.length > 0) {
-                const defaultCompatibleTheme = compatibleThemes.find(t => t.isDefault) || compatibleThemes[0];
-                console.log(`🎨 Switching to compatible theme: ${defaultCompatibleTheme.id}`);
-                this.selectTimerTheme(defaultCompatibleTheme.id);
-            }
-        } else {
-            console.log(`🎨 Theme ${currentTimerTheme} is compatible, keeping it`);
-        }
-
-        // Re-initialize the theme selector with new compatibility
-        this.initializeTimerThemeSelector();
     }
 }

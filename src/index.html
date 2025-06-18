@@ -11,6 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Presto</title>
   <script src="/managers/update-manager-global.js" defer></script>
+  <script src="/managers/conversation-manager.js" defer></script>
   <script type="module" src="/main.js" defer></script>
 </head>
 
@@ -349,6 +350,10 @@
             <button class="settings-nav-item nav-item-base" data-category="advanced">
               <i class="ri-settings-3-line"></i>
               <span>Advanced</span>
+            </button>
+            <button class="settings-nav-item nav-item-base" data-category="audio">
+              <i class="ri-mic-line"></i>
+              <span>Audio Detection</span>
             </button>
             <button class="settings-nav-item nav-item-base" data-category="updates">
               <i class="ri-download-line"></i>
@@ -691,6 +696,93 @@
                   This will permanently delete all your Pomodoro sessions, tasks, statistics, and reset all settings to
                   default. This action cannot be undone.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Detection Settings -->
+          <div class="settings-category" id="category-audio">
+            <div class="category-header">
+              <h1>Audio Detection</h1>
+              <p class="category-description">Configure conversation detection using Core Audio (macOS only)</p>
+            </div>
+
+            <div class="settings-section">
+              <h3>🎤 Conversation Detection</h3>
+              <p class="settings-description">Automatically detect when you're in a meeting or conversation by
+                monitoring audio activity.</p>
+
+              <div class="setting-item">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="audio-detection-enabled">
+                  <span class="checkmark"></span>
+                  Enable Audio Detection
+                </label>
+                <p class="setting-description">Monitor microphone and speaker activity to detect conversations. This
+                  feature requires microphone permissions.</p>
+              </div>
+
+              <div class="setting-item">
+                <label for="detection-sensitivity">Detection Sensitivity:</label>
+                <input type="range" id="detection-sensitivity" min="0.1" max="1.0" step="0.1" value="0.7">
+                <span class="range-value" id="sensitivity-value">0.7</span>
+                <p class="setting-description">Adjust how sensitive the conversation detection should be (0.1 = very
+                  sensitive, 1.0 = only very clear conversations)</p>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>🔬 Audio Monitoring Status</h3>
+
+              <div class="audio-status-container">
+                <div class="status-row">
+                  <span class="status-label">Monitoring Status:</span>
+                  <span class="status-value" id="monitoring-status">Stopped</span>
+                </div>
+
+                <div class="status-row">
+                  <span class="status-label">Microphone Activity:</span>
+                  <span class="status-value" id="mic-status">🔇 Inactive</span>
+                </div>
+
+                <div class="status-row">
+                  <span class="status-label">Speaker Activity:</span>
+                  <span class="status-value" id="speaker-status">🔇 Inactive</span>
+                </div>
+
+                <div class="status-row">
+                  <span class="status-label">In Conversation:</span>
+                  <span class="status-value" id="conversation-status">❌ No</span>
+                </div>
+
+                <div class="status-row">
+                  <span class="status-label">Confidence Level:</span>
+                  <span class="status-value" id="confidence-level">0%</span>
+                </div>
+              </div>
+
+              <div class="audio-controls">
+                <button class="btn-primary" id="start-audio-detection">Start Detection</button>
+                <button class="btn-secondary" id="stop-audio-detection" disabled>Stop Detection</button>
+                <button class="btn-secondary" id="test-audio-detection">Test Audio</button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>ℹ️ How It Works</h3>
+              <div class="info-box">
+                <p><strong>Privacy First:</strong> All audio processing happens locally on your device. No audio data is
+                  transmitted or stored.</p>
+                <p><strong>Detection Method:</strong> The system monitors audio levels and patterns from your microphone
+                  and speakers to determine if you're in an active conversation.</p>
+                <p><strong>Use Cases:</strong></p>
+                <ul>
+                  <li>Automatically pause timers during important meetings</li>
+                  <li>Track time spent in conversations vs focused work</li>
+                  <li>Provide insights into your communication patterns</li>
+                </ul>
+                <p><strong>Requirements:</strong> This feature is only available on macOS and requires microphone access
+                  permissions.</p>
               </div>
             </div>
           </div>

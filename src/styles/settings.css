@@ -1298,3 +1298,147 @@
     background: #40318d !important;
   }
 }
+
+/* Audio Detection Styles */
+.audio-status-container {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.status-row:last-child {
+  border-bottom: none;
+}
+
+.status-label {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.status-value {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.audio-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.audio-controls button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-color-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--card-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--background-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.info-box {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.info-box p {
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+}
+
+.info-box p:last-child {
+  margin-bottom: 0;
+}
+
+.info-box ul {
+  margin: 0.5rem 0 1rem 1.5rem;
+  line-height: 1.6;
+}
+
+.info-box strong {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Range input styling for detection sensitivity */
+#detection-sensitivity {
+  width: 200px;
+  margin: 0 1rem;
+}
+
+.range-value {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  color: var(--accent-color);
+  min-width: 3rem;
+  text-align: center;
+  display: inline-block;
+}
+
+/* Active status indicators */
+.status-value.active {
+  color: var(--success-color);
+}
+
+.status-value.inactive {
+  color: var(--text-light);
+}
+
+.status-value.conversation-active {
+  color: var(--warning-color);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}

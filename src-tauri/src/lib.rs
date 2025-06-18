@@ -11,11 +11,18 @@ use tauri_plugin_aptabase::EventTracker;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
+// Audio detection module
+mod audio_detection;
+use audio_detection::{AudioActivity, ConversationDetector};
+
 // Type alias for the app handle to avoid generic complexity
 type AppHandle = tauri::AppHandle<tauri::Wry>;
 
 // Global activity monitoring state
 static ACTIVITY_MONITOR: Mutex<Option<ActivityMonitor>> = Mutex::new(None);
+
+// Global audio conversation detector
+static CONVERSATION_DETECTOR: Mutex<Option<ConversationDetector>> = Mutex::new(None);
 
 // Global shortcut debounce state
 static SHORTCUT_DEBOUNCE: LazyLock<Mutex<HashMap<String, Instant>>> =
@@ -747,6 +754,84 @@ async fn is_autostart_enabled(app: AppHandle) -> Result<bool, String> {
         .map_err(|e| format!("Failed to check autostart status: {}", e))
 }
 
+// Audio conversation detection commands
+#[tauri::command]
+async fn start_conversation_detection() -> Result<(), String> {
+    let mut detector_guard = CONVERSATION_DETECTOR.lock().unwrap();
+
+    if detector_guard.is_none() {
+        let mut detector = ConversationDetector::new()
+            .map_err(|e| format!("Failed to create conversation detector: {}", e))?;
+
+        detector
+            .start_monitoring()
+            .map_err(|e| format!("Failed to start audio monitoring: {}", e))?;
+
+        *detector_guard = Some(detector);
+        println!("🎤 Conversation detection started");
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn stop_conversation_detection() -> Result<(), String> {
+    let mut detector_guard = CONVERSATION_DETECTOR.lock().unwrap();
+
+    if let Some(ref mut detector) = *detector_guard {
+        detector.stop_monitoring();
+        *detector_guard = None;
+        println!("🔇 Conversation detection stopped");
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_conversation_status() -> Result<AudioActivity, String> {
+    let detector_guard = CONVERSATION_DETECTOR.lock().unwrap();
+
+    if let Some(ref detector) = *detector_guard {
+        Ok(detector.get_current_activity())
+    } else {
+        Ok(AudioActivity {
+            is_microphone_active: false,
+            is_speakers_active: false,
+            input_level: 0.0,
+            output_level: 0.0,
+            confidence: 0.0,
+        })
+    }
+}
+
+#[tauri::command]
+async fn is_in_conversation() -> Result<bool, String> {
+    let detector_guard = CONVERSATION_DETECTOR.lock().unwrap();
+
+    if let Some(ref detector) = *detector_guard {
+        Ok(detector.is_in_conversation())
+    } else {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
+async fn get_conversation_confidence() -> Result<f32, String> {
+    let detector_guard = CONVERSATION_DETECTOR.lock().unwrap();
+
+    if let Some(ref detector) = *detector_guard {
+        Ok(detector.get_conversation_confidence())
+    } else {
+        Ok(0.0)
+    }
+}
+
+#[tauri::command]
+async fn test_audio_detection() -> Result<AudioActivity, String> {
+    audio_detection::test_audio_detection()
+        .map_err(|e| format!("Audio detection test failed: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::async_runtime::block_on(async {
@@ -783,7 +868,13 @@ pub fn run() {
                 update_activity_timeout,
                 enable_autostart,
                 disable_autostart,
-                is_autostart_enabled
+                is_autostart_enabled,
+                start_conversation_detection,
+                stop_conversation_detection,
+                get_conversation_status,
+                is_in_conversation,
+                get_conversation_confidence,
+                test_audio_detection
             ])
             .setup(|app| {
                 // Track app started event (if enabled)
@@ -796,16 +887,29 @@ pub fn run() {
 
                 let show_item =
                     MenuItem::with_id(app, "show", "Mostra Presto", true, None::<&str>)?;
-                let start_session_item =
-                    MenuItem::with_id(app, "start_session", "Inizia sessione", false, None::<&str>)?;
-                let pause_item =
-                    MenuItem::with_id(app, "pause", "Pausa", false, None::<&str>)?;
+                let start_session_item = MenuItem::with_id(
+                    app,
+                    "start_session",
+                    "Inizia sessione",
+                    false,
+                    None::<&str>,
+                )?;
+                let pause_item = MenuItem::with_id(app, "pause", "Pausa", false, None::<&str>)?;
                 let skip_item =
                     MenuItem::with_id(app, "skip", "Salta sessione", false, None::<&str>)?;
-                let cancel_item =
-                    MenuItem::with_id(app, "cancel", "Annulla", false, None::<&str>)?;
+                let cancel_item = MenuItem::with_id(app, "cancel", "Annulla", false, None::<&str>)?;
                 let quit_item = MenuItem::with_id(app, "quit", "Esci", true, None::<&str>)?;
-                let menu = Menu::with_items(app, &[&show_item, &start_session_item, &pause_item, &skip_item, &cancel_item, &quit_item])?;
+                let menu = Menu::with_items(
+                    app,
+                    &[
+                        &show_item,
+                        &start_session_item,
+                        &pause_item,
+                        &skip_item,
+                        &cancel_item,
+                        &quit_item,
+                    ],
+                )?;
 
                 let app_handle = app.handle().clone();
                 let app_handle_for_click = app_handle.clone();
@@ -925,11 +1029,11 @@ async fn update_tray_menu(
     current_mode: String,
 ) -> Result<(), String> {
     let tray = app.tray_by_id("main");
-    
+
     if let Some(tray) = tray {
         let show_item = MenuItem::with_id(&app, "show", "Mostra Presto", true, None::<&str>)
             .map_err(|e| format!("Failed to create show item: {}", e))?;
-        
+
         // Inizia sessione: abilitato solo se non è in esecuzione
         let start_session_item = MenuItem::with_id(
             &app,
@@ -937,8 +1041,9 @@ async fn update_tray_menu(
             "Inizia sessione",
             !is_running,
             None::<&str>,
-        ).map_err(|e| format!("Failed to create start session item: {}", e))?;
-        
+        )
+        .map_err(|e| format!("Failed to create start session item: {}", e))?;
+
         // Pausa: abilitata solo se è in esecuzione e non in pausa
         let pause_item = MenuItem::with_id(
             &app,
@@ -946,42 +1051,41 @@ async fn update_tray_menu(
             "Pausa",
             is_running && !is_paused,
             None::<&str>,
-        ).map_err(|e| format!("Failed to create pause item: {}", e))?;
-        
+        )
+        .map_err(|e| format!("Failed to create pause item: {}", e))?;
+
         // Skip: abilitato solo se è in esecuzione
-        let skip_item = MenuItem::with_id(
-            &app,
-            "skip",
-            "Salta sessione",
-            is_running,
-            None::<&str>,
-        ).map_err(|e| format!("Failed to create skip item: {}", e))?;
-        
+        let skip_item = MenuItem::with_id(&app, "skip", "Salta sessione", is_running, None::<&str>)
+            .map_err(|e| format!("Failed to create skip item: {}", e))?;
+
         // Annulla: abilitato se è in modalità focus, disabilitato in break/longBreak (undo)
         let cancel_text = if current_mode == "focus" {
             "Annulla"
         } else {
             "Annulla ultima"
         };
-        let cancel_item = MenuItem::with_id(
-            &app,
-            "cancel",
-            cancel_text,
-            true,
-            None::<&str>,
-        ).map_err(|e| format!("Failed to create cancel item: {}", e))?;
-        
+        let cancel_item = MenuItem::with_id(&app, "cancel", cancel_text, true, None::<&str>)
+            .map_err(|e| format!("Failed to create cancel item: {}", e))?;
+
         let quit_item = MenuItem::with_id(&app, "quit", "Esci", true, None::<&str>)
             .map_err(|e| format!("Failed to create quit item: {}", e))?;
-        
+
         let new_menu = Menu::with_items(
             &app,
-            &[&show_item, &start_session_item, &pause_item, &skip_item, &cancel_item, &quit_item],
-        ).map_err(|e| format!("Failed to create menu: {}", e))?;
-        
+            &[
+                &show_item,
+                &start_session_item,
+                &pause_item,
+                &skip_item,
+                &cancel_item,
+                &quit_item,
+            ],
+        )
+        .map_err(|e| format!("Failed to create menu: {}", e))?;
+
         tray.set_menu(Some(new_menu))
             .map_err(|e| format!("Failed to set tray menu: {}", e))?;
     }
-    
+
     Ok(())
 }
