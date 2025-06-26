@@ -1,10 +1,10 @@
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-use base64::{Engine as _, engine::general_purpose};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
@@ -46,8 +46,8 @@ struct ManualSession {
     start_time: String,   // "HH:MM"
     end_time: String,     // "HH:MM"
     notes: Option<String>,
-    created_at: String,   // ISO string
-    date: String,         // Date string for the session date
+    created_at: String,                   // ISO string
+    date: String,                         // Date string for the session date
     tags: Option<Vec<serde_json::Value>>, // Array of tag objects
 }
 
@@ -789,7 +789,8 @@ async fn save_manual_sessions(sessions: Vec<ManualSession>, app: AppHandle) -> R
     let json = serde_json::to_string_pretty(&sessions)
         .map_err(|e| format!("Failed to serialize manual sessions: {}", e))?;
 
-    fs::write(file_path, json).map_err(|e| format!("Failed to write manual sessions file: {}", e))?;
+    fs::write(file_path, json)
+        .map_err(|e| format!("Failed to write manual sessions file: {}", e))?;
 
     // Track manual sessions saved analytics (if enabled)
     if are_analytics_enabled(&app).await {
@@ -816,8 +817,8 @@ async fn load_manual_sessions(app: AppHandle) -> Result<Vec<ManualSession>, Stri
 
     let content = fs::read_to_string(file_path)
         .map_err(|e| format!("Failed to read manual sessions file: {}", e))?;
-    let sessions: Vec<ManualSession> =
-        serde_json::from_str(&content).map_err(|e| format!("Failed to parse manual sessions: {}", e))?;
+    let sessions: Vec<ManualSession> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse manual sessions: {}", e))?;
 
     Ok(sessions)
 }
@@ -826,13 +827,13 @@ async fn load_manual_sessions(app: AppHandle) -> Result<Vec<ManualSession>, Stri
 async fn save_manual_session(session: ManualSession, app: AppHandle) -> Result<(), String> {
     // Load existing sessions
     let mut sessions = load_manual_sessions(app.clone()).await?;
-    
+
     // Remove existing session with same ID if it exists (for updates)
     sessions.retain(|s| s.id != session.id);
-    
+
     // Add the new/updated session
     sessions.push(session);
-    
+
     // Save all sessions back
     save_manual_sessions(sessions, app).await
 }
@@ -841,24 +842,25 @@ async fn save_manual_session(session: ManualSession, app: AppHandle) -> Result<(
 async fn delete_manual_session(session_id: String, app: AppHandle) -> Result<(), String> {
     // Load existing sessions
     let mut sessions = load_manual_sessions(app.clone()).await?;
-    
+
     // Remove the session with the specified ID
     sessions.retain(|s| s.id != session_id);
-    
+
     // Save the updated sessions back
     save_manual_sessions(sessions, app).await
 }
 
 #[tauri::command]
-async fn get_manual_sessions_for_date(date: String, app: AppHandle) -> Result<Vec<ManualSession>, String> {
+async fn get_manual_sessions_for_date(
+    date: String,
+    app: AppHandle,
+) -> Result<Vec<ManualSession>, String> {
     let sessions = load_manual_sessions(app).await?;
-    
+
     // Filter sessions for the specified date
-    let filtered_sessions: Vec<ManualSession> = sessions
-        .into_iter()
-        .filter(|s| s.date == date)
-        .collect();
-    
+    let filtered_sessions: Vec<ManualSession> =
+        sessions.into_iter().filter(|s| s.date == date).collect();
+
     Ok(filtered_sessions)
 }
 
@@ -918,6 +920,7 @@ pub fn run() {
                 get_platform,
                 execute_shell_command,
                 check_camera_microphone_usage,
+                check_webrtc_connections,
                 check_high_bandwidth_connections
             ])
             .setup(|app| {
@@ -1073,10 +1076,10 @@ async fn load_tags(app: AppHandle) -> Result<Vec<Tag>, String> {
         .map_err(|e| format!("Failed to get app data directory: {}", e))?;
 
     let file_path = app_data_dir.join("tags.json");
-    
+
     if file_path.exists() {
-        let content = fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read tags: {}", e))?;
+        let content =
+            fs::read_to_string(&file_path).map_err(|e| format!("Failed to read tags: {}", e))?;
         Ok(serde_json::from_str(&content).unwrap_or_else(|_| Vec::new()))
     } else {
         // Return default focus tag if no tags exist
@@ -1115,13 +1118,13 @@ async fn save_tags(tags: Vec<Tag>, app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn save_tag(tag: Tag, app: AppHandle) -> Result<(), String> {
     let mut tags = load_tags(app.clone()).await?;
-    
+
     // Remove existing tag with same ID if it exists (for updates)
     tags.retain(|t| t.id != tag.id);
-    
+
     // Add the new/updated tag
     tags.push(tag);
-    
+
     // Save all tags back
     save_tags(tags, app).await
 }
@@ -1129,10 +1132,10 @@ async fn save_tag(tag: Tag, app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn delete_tag(tag_id: String, app: AppHandle) -> Result<(), String> {
     let mut tags = load_tags(app.clone()).await?;
-    
+
     // Remove the tag with the specified ID
     tags.retain(|t| t.id != tag_id);
-    
+
     // Save the updated tags back
     save_tags(tags, app).await
 }
@@ -1145,7 +1148,7 @@ async fn load_session_tags(app: AppHandle) -> Result<Vec<SessionTag>, String> {
         .map_err(|e| format!("Failed to get app data directory: {}", e))?;
 
     let file_path = app_data_dir.join("session_tags.json");
-    
+
     if file_path.exists() {
         let content = fs::read_to_string(&file_path)
             .map_err(|e| format!("Failed to read session tags: {}", e))?;
@@ -1185,14 +1188,18 @@ async fn get_env_var(key: String) -> Result<String, String> {
     if let Ok(value) = std::env::var(&key) {
         return Ok(value);
     }
-    
+
     // Try multiple possible locations for .env file
     let possible_paths = vec![
         std::env::current_dir().ok().map(|p| p.join(".env")),
-        std::env::current_dir().ok().and_then(|p| p.parent().map(|parent| parent.join(".env"))),
-        Some(std::path::PathBuf::from("/Users/stefanonovelli/Sites/Personal/presto/.env")),
+        std::env::current_dir()
+            .ok()
+            .and_then(|p| p.parent().map(|parent| parent.join(".env"))),
+        Some(std::path::PathBuf::from(
+            "/Users/stefanonovelli/Sites/Personal/presto/.env",
+        )),
     ];
-    
+
     for path_opt in possible_paths {
         if let Some(env_path) = path_opt {
             println!("Checking .env path: {:?}", env_path);
@@ -1211,8 +1218,11 @@ async fn get_env_var(key: String) -> Result<String, String> {
             }
         }
     }
-    
-    Err(format!("Environment variable '{}' not found in any location", key))
+
+    Err(format!(
+        "Environment variable '{}' not found in any location",
+        key
+    ))
 }
 
 #[tauri::command]
@@ -1290,11 +1300,11 @@ async fn write_excel_file(path: String, data: String) -> Result<(), String> {
     let decoded_data = general_purpose::STANDARD
         .decode(data)
         .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
-    
+
     // Write the binary data to file
     fs::write(&path, decoded_data)
         .map_err(|e| format!("Failed to write Excel file to {}: {}", path, e))?;
-    
+
     Ok(())
 }
 
@@ -1316,12 +1326,12 @@ async fn get_platform() -> Result<String, String> {
 #[tauri::command]
 async fn execute_shell_command(command: String, args: Vec<String>) -> Result<String, String> {
     use std::process::Command;
-    
+
     let output = Command::new(&command)
         .args(&args)
         .output()
         .map_err(|e| format!("Failed to execute command '{}': {}", command, e))?;
-    
+
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     } else {
@@ -1336,19 +1346,20 @@ async fn check_camera_microphone_usage() -> Result<bool, String> {
     #[cfg(target_os = "macos")]
     {
         use std::process::Command;
-        
+
         // Simple and effective: Check if camera or microphone are actively being used
-        
+
         // Method 1: Check if ANY process is using the camera
-        let camera_check = Command::new("lsof")
-            .args(&["/dev/video0"])
-            .output();
-            
+        let camera_check = Command::new("lsof").args(&["/dev/video0"]).output();
+
         println!("DEBUG: Checking camera usage with lsof /dev/video0");
         if let Ok(camera_result) = camera_check {
             let camera_content = String::from_utf8_lossy(&camera_result.stdout);
             println!("DEBUG: Camera lsof result: '{}'", camera_content);
-            println!("DEBUG: Camera lsof line count: {}", camera_content.lines().count());
+            println!(
+                "DEBUG: Camera lsof line count: {}",
+                camera_content.lines().count()
+            );
             if !camera_content.trim().is_empty() && camera_content.lines().count() > 1 {
                 println!("Camera in active use: {}", camera_content);
                 return Ok(true);
@@ -1356,32 +1367,40 @@ async fn check_camera_microphone_usage() -> Result<bool, String> {
         } else {
             println!("DEBUG: Camera lsof command failed");
         }
-        
+
         // Method 2: Check for active microphone usage via system profiler
         let mic_check = Command::new("system_profiler")
             .args(&["SPAudioDataType", "-json"])
             .output();
-            
+
         println!("DEBUG: Checking audio with system_profiler");
         if let Ok(mic_result) = mic_check {
             let mic_content = String::from_utf8_lossy(&mic_result.stdout);
-            println!("DEBUG: Audio contains 'input': {}", mic_content.contains("\"input\""));
-            println!("DEBUG: Audio contains 'Built-in': {}", mic_content.contains("Built-in"));
-            
+            println!(
+                "DEBUG: Audio contains 'input': {}",
+                mic_content.contains("\"input\"")
+            );
+            println!(
+                "DEBUG: Audio contains 'Built-in': {}",
+                mic_content.contains("Built-in")
+            );
+
             // Look for active input in the audio data
             if mic_content.contains("\"input\"") && mic_content.contains("Built-in") {
                 // Parse to see if there's actual activity
                 println!("Audio input device detected as active");
-                
+
                 // Additional check: see if any meeting apps are running with moderate CPU
-                let ps_check = Command::new("ps")
-                    .args(&["aux"])
-                    .output();
-                    
+                let ps_check = Command::new("ps").args(&["aux"]).output();
+
                 if let Ok(ps_result) = ps_check {
                     let ps_content = String::from_utf8_lossy(&ps_result.stdout);
-                    let meeting_apps = ["zoom", "Teams", "Discord", "Skype", "Chrome", "Safari", "Firefox", "meet"];
-                    
+                    let meeting_apps = [
+                        "zoom", "Teams", 
+                        // "Discord", 
+                        "Skype", "Chrome", "Safari", "Firefox", "meet",
+                    ];
+
                     println!("DEBUG: Checking CPU usage for meeting apps");
                     for line in ps_content.lines() {
                         for app in &meeting_apps {
@@ -1392,7 +1411,10 @@ async fn check_camera_microphone_usage() -> Result<bool, String> {
                                         println!("DEBUG: {} using {}% CPU", app, cpu_usage);
                                         // Even moderate CPU usage (>5%) with active audio = likely in call
                                         if cpu_usage > 5.0 {
-                                            println!("Meeting app {} using {}% CPU with active audio", app, cpu_usage);
+                                            println!(
+                                                "Meeting app {} using {}% CPU with active audio",
+                                                app, cpu_usage
+                                            );
                                             return Ok(true);
                                         }
                                     }
@@ -1405,36 +1427,368 @@ async fn check_camera_microphone_usage() -> Result<bool, String> {
         } else {
             println!("DEBUG: system_profiler command failed");
         }
-        
+
         // Method 3: Check for recent AVCaptureSession activity (camera sessions)
         let capture_check = Command::new("log")
             .args(&[
                 "show",
-                "--predicate", "eventMessage contains 'AVCaptureSession'",
-                "--style", "syslog",
-                "--last", "10s"
+                "--predicate",
+                "eventMessage contains 'AVCaptureSession'",
+                "--style",
+                "syslog",
+                "--last",
+                "10s",
             ])
             .output();
-            
+
         println!("DEBUG: Checking AVCaptureSession logs");
         if let Ok(capture_result) = capture_check {
             let capture_content = String::from_utf8_lossy(&capture_result.stdout);
             let line_count = capture_content.lines().count();
             println!("DEBUG: AVCaptureSession log lines: {}", line_count);
-            if line_count > 5 {  // Multiple recent camera events
+            if line_count > 5 {
+                // Multiple recent camera events
                 println!("Multiple recent camera capture sessions detected");
                 return Ok(true);
             }
         } else {
             println!("DEBUG: AVCaptureSession log command failed");
         }
-        
+
         Ok(false)
     }
-    
+
     #[cfg(not(target_os = "macos"))]
     {
         Err("Camera/microphone detection only supported on macOS".to_string())
+    }
+}
+
+#[tauri::command]
+async fn check_webrtc_connections() -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+
+        println!("DEBUG: Checking for WebRTC connections with DNS filtering...");
+
+        // Known IP ranges for major meeting platforms (first two octets) - moved to top for global access
+        let meeting_ip_ranges = [
+            // Google (Meet, YouTube, etc.) - Enable specific ranges for Meet
+            ("74.125.", "Google"),
+            ("142.250.", "Google"),  
+            ("172.217.", "Google"),
+            ("108.177.", "Google"),
+            ("216.58.", "Google"),
+            
+            // Microsoft (Teams)
+            ("52.112.", "Microsoft"),
+            ("52.114.", "Microsoft"),
+            ("52.115.", "Microsoft"),
+            ("13.107.", "Microsoft"),
+            
+            // Discord
+            // ("162.159.", "Discord"),
+            // ("104.16.", "Discord"),
+            
+            // Zoom  
+            ("3.7.", "Zoom"),
+            ("3.21.", "Zoom"),
+            ("3.22.", "Zoom"),
+            ("3.23.", "Zoom"),
+            ("52.61.", "Zoom"),
+            ("160.1.", "Zoom"),
+        ];
+
+        // Step 1: Check for active connections to known meeting domains
+        let netstat_check = Command::new("netstat").args(&["-an"]).output();
+        
+        let mut has_meeting_domain_connections = false;
+        let mut netstat_content = String::new(); // Declare here for broader scope
+        
+        if let Ok(netstat_result) = netstat_check {
+            netstat_content = String::from_utf8_lossy(&netstat_result.stdout).to_string();
+            
+            // Check if any network connections are to meeting platform IP ranges
+            for line in netstat_content.lines() {
+                if line.contains("ESTABLISHED") || line.contains("UDP") {
+                    for (ip_range, platform) in &meeting_ip_ranges {
+                        if line.contains(ip_range) {
+                            println!("DEBUG: Found connection to {} ({}.*): {}", platform, ip_range, line.trim());
+                            has_meeting_domain_connections = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Step 2: Only proceed with WebRTC check if we have meeting domain connections
+        if !has_meeting_domain_connections {
+            println!("DEBUG: No connections to known meeting domains found");
+            return Ok(false);
+        }
+        
+        println!("DEBUG: Meeting domain connections found, checking for WebRTC...");
+        
+        // If we have Google connections and a browser that might be running Meet, be more permissive
+        let is_google_connection = netstat_content.lines().any(|line| {
+            line.contains("216.58.") || line.contains("74.125.") || line.contains("142.250.") || line.contains("108.177.")
+        });
+        
+        // Step 2.5: Check if there are browser processes running that might be using Google Meet
+        let ps_check = Command::new("ps").args(&["aux"]).output();
+        let mut has_potential_meet_browser = false;
+        
+        if let Ok(ps_result) = ps_check {
+            let ps_content = String::from_utf8_lossy(&ps_result.stdout);
+            
+            // First, check for explicit meeting indicators
+            for line in ps_content.lines() {
+                if (line.to_lowercase().contains("chrome") || 
+                    line.to_lowercase().contains("safari") || 
+                    line.to_lowercase().contains("firefox")) &&
+                   (line.to_lowercase().contains("meet") || 
+                    line.to_lowercase().contains("googlemeet") ||
+                    line.contains("--app=")) {
+                    println!("DEBUG: Found explicit Google Meet browser process: {}", line.split_whitespace().collect::<Vec<_>>().get(10).unwrap_or(&"unknown"));
+                    has_potential_meet_browser = true;
+                    break;
+                }
+            }
+            
+            // If no explicit meeting process found, but we have Google connections,
+            // check if any browser is running (they could be in a Meet tab)
+            if !has_potential_meet_browser && is_google_connection {
+                for line in ps_content.lines() {
+                    if line.to_lowercase().contains("chrome") || 
+                       line.to_lowercase().contains("safari") || 
+                       line.to_lowercase().contains("firefox") {
+                        println!("DEBUG: Found browser that could be running Meet: {}", 
+                               line.split_whitespace().collect::<Vec<_>>().get(10).unwrap_or(&"unknown"));
+                        has_potential_meet_browser = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        println!("DEBUG: Has Google connections: {}, Has potential Meet browser: {}", is_google_connection, has_potential_meet_browser);
+        
+        // Step 3: Check for WebRTC-specific connections
+        let lsof_udp_check = Command::new("lsof").args(&["-i", "UDP"]).output();
+
+        if let Ok(lsof_result) = lsof_udp_check {
+            let lsof_content = String::from_utf8_lossy(&lsof_result.stdout);
+
+            // Look for UDP connections that are NOT system services - much more restrictive
+            let filtered_udp_connections = lsof_content
+                .lines()
+                .filter(|line| {
+                    line.contains("UDP") && 
+                    line.contains("->") && // Only outbound connections
+                    !line.contains("*:*") && // Exclude listening sockets
+                    
+                    // Exclude system services (comprehensive list)
+                    !line.contains("rapportd") &&
+                    !line.contains("identitys") &&
+                    !line.contains("mDNSResponder") &&
+                    !line.contains("configd") &&
+                    !line.contains("systemstats") &&
+                    !line.contains("networkd") &&
+                    !line.contains("kernel_task") &&
+                    !line.contains("launchd") &&
+                    !line.contains("UserEventAgent") &&
+                    !line.contains("bluetoothd") &&
+                    !line.contains("syslogd") &&
+                    !line.contains("notifyd") &&
+                    !line.contains("distnoted") &&
+                    !line.contains("cfprefsd") &&
+                    !line.contains("trustd") &&
+                    !line.contains("installd") &&
+                    !line.contains("nsurlsessiond") &&
+                    !line.contains("cloudd") &&
+                    !line.contains("bird") &&
+                    !line.contains("sharingd") &&
+                    !line.contains("akd") &&
+                    !line.contains("secd") &&
+                    !line.contains("opendirectoryd") &&
+                    !line.contains("deleted") &&
+                    
+                    // Exclude Apple system services and frameworks
+                    !line.contains("avconfere") &&      // AVConferenceFramework
+                    !line.contains("AVConference") &&
+                    !line.contains("controlcenter") &&
+                    !line.contains("CommCenter") &&
+                    !line.contains("callservicesd") &&
+                    !line.contains("mediaremoted") &&
+                    !line.contains("coreaudiod") &&
+                    !line.contains("audiomxd") &&
+                    
+                    // Exclude non-meeting apps
+                    !line.contains("Spotify") &&
+                    !line.contains("SetappAge") &&
+                    !line.contains("Setapp") &&
+                    !line.contains("Music") &&
+                    !line.contains("iTunes") &&
+                    !line.contains("VLC") &&
+                    !line.contains("QuickTime") &&
+                    !line.contains("IINA") &&
+                    !line.contains("Plex") &&
+                    !line.contains("Netflix") &&
+                    !line.contains("YouTube") &&
+                    !line.contains("Twitch") &&
+                    !line.contains("Steam") &&
+                    
+                    // Exclude local network connections (AirDrop, AirPlay, etc.)
+                    !line.contains(".local:") &&
+                    !line.contains("192.168.") &&
+                    
+                    // Exclude common system ports 
+                    !line.contains(":53") &&    // DNS
+                    !line.contains(":123") &&   // NTP
+                    !line.contains(":67") &&    // DHCP
+                    !line.contains(":68") &&    // DHCP
+                    !line.contains(":5353") &&  // mDNS
+                    !line.contains(":1900") &&  // UPnP
+                    !line.contains(":443") &&   // HTTPS (too generic)
+                    !line.contains(":8125") &&  // StatsD/metrics
+                    
+                    // Only include specific meeting apps - much more restrictive
+                    (line.to_lowercase().contains("zoom") ||
+                     line.to_lowercase().contains("teams") ||
+                     line.to_lowercase().contains("slack") ||
+                     line.to_lowercase().contains("skype") ||
+                     line.to_lowercase().contains("webex") ||
+                     line.to_lowercase().contains("meet") ||
+                     line.to_lowercase().contains("googlemeet") ||
+                     line.to_lowercase().contains("hangouts") ||
+                     (line.to_lowercase().contains("chrome") && line.contains("meet")) ||
+                     (line.to_lowercase().contains("safari") && line.contains("meet")) ||
+                     (line.to_lowercase().contains("firefox") && line.contains("meet")))
+                })
+                .collect::<Vec<&str>>();
+
+            println!("DEBUG: Filtered UDP connections found: {}", filtered_udp_connections.len());
+
+            // Show all filtered connections for debugging
+            for connection in filtered_udp_connections.iter().take(5) {
+                println!("DEBUG: Filtered UDP: {}", connection);
+            }
+
+            // Only detect if we have significant outbound UDP connections to meeting platforms (more restrictive)
+            if filtered_udp_connections.len() >= 2 {
+                println!("Meeting detected: Meeting domain connections + {} filtered UDP connections to meeting platforms", filtered_udp_connections.len());
+                return Ok(true);
+            }
+            
+            // Special case for Google Meet: if we have Google TCP connections and potential browser, check for any UDP at all
+            if is_google_connection && has_potential_meet_browser {
+                let any_browser_udp = lsof_content
+                    .lines()
+                    .filter(|line| {
+                        (line.to_lowercase().contains("chrome") || 
+                         line.to_lowercase().contains("safari") || 
+                         line.to_lowercase().contains("firefox")) &&
+                        line.contains("UDP") && 
+                        line.contains("->") &&
+                        !line.contains("*:*") &&
+                        !line.contains(":53") && // Exclude DNS
+                        !line.contains(":123") // Exclude NTP
+                    })
+                    .collect::<Vec<&str>>();
+                    
+                println!("DEBUG: Found {} browser UDP connections (potential Meet)", any_browser_udp.len());
+                
+                if any_browser_udp.len() >= 1 {
+                    println!("Meeting detected: Google connections + browser + {} UDP connections", any_browser_udp.len());
+                    for connection in any_browser_udp.iter().take(2) {
+                        println!("DEBUG: Browser UDP: {}", connection);
+                    }
+                    return Ok(true);
+                }
+            }
+            
+            // Even more permissive: if we have multiple Google connections, likely a meeting
+            let google_connection_count = netstat_content.lines().filter(|line| {
+                line.contains("ESTABLISHED") && (
+                    line.contains("216.58.") || line.contains("74.125.") || 
+                    line.contains("142.250.") || line.contains("108.177.")
+                )
+            }).count();
+            
+            println!("DEBUG: Google connection count: {}", google_connection_count);
+            
+            if google_connection_count >= 3 && has_potential_meet_browser {
+                println!("Meeting detected: {} Google connections + browser (likely Meet)", google_connection_count);
+                return Ok(true);
+            }
+            
+            // Alternative check: Look for browser processes with outbound UDP connections TO MEETING DOMAINS
+            let browser_processes = ["chrome", "safari", "firefox"];
+            
+            for browser in &browser_processes {
+                let browser_connections = lsof_content
+                    .lines()
+                    .filter(|line| {
+                        line.to_lowercase().contains(browser) && 
+                        line.contains("UDP") && 
+                        line.contains("->") && // Only outbound connections
+                        !line.contains("*:*") && // Exclude listening sockets
+                        // Exclude common browser UDP that's not WebRTC
+                        !line.contains(":53") && // DNS
+                        !line.contains(":123") && // NTP
+                        !line.contains(":443") && // HTTPS
+                        // Only include connections to meeting platform IPs
+                        meeting_ip_ranges.iter().any(|range| line.contains(range.0))
+                    })
+                    .collect::<Vec<&str>>();
+                    
+                if browser_connections.len() >= 2 {
+                    println!("DEBUG: Browser {} has {} outbound UDP connections to meeting domains", browser, browser_connections.len());
+                    
+                    // Show browser UDP examples
+                    for connection in browser_connections.iter().take(2) {
+                        println!("DEBUG: Browser UDP to meeting domain: {}", connection);
+                    }
+                    
+                    return Ok(true);
+                }
+            }
+            
+            // Even more permissive: if we have meeting connections and any process has UDP, likely in call
+            // Check if we have any UDP connections to meeting IP ranges specifically
+            let meeting_udp_connections = lsof_content
+                .lines()
+                .filter(|line| {
+                    line.contains("UDP") && meeting_ip_ranges.iter().any(|range| line.contains(range.0))
+                })
+                .collect::<Vec<&str>>();
+                
+            if !meeting_udp_connections.is_empty() {
+                println!("DEBUG: Found {} UDP connections directly to meeting platforms", meeting_udp_connections.len());
+                
+                for connection in meeting_udp_connections.iter().take(2) {
+                    println!("DEBUG: Meeting UDP: {}", connection);
+                }
+                
+                return Ok(true);
+            }
+            
+            // FINAL FALLBACK: If we have Google connections AND a potential browser, consider it a meeting
+            // This covers the case where Google Meet is active but UDP is not clearly detectable
+            if is_google_connection && has_potential_meet_browser {
+                println!("Meeting detected: Google connections + potential Meet browser (final fallback)");
+                return Ok(true);
+            }
+        }
+
+        println!("DEBUG: Meeting domain connections found but no WebRTC detected");
+        Ok(false)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("WebRTC detection only supported on macOS".to_string())
     }
 }
 
@@ -1443,30 +1797,36 @@ async fn check_high_bandwidth_connections() -> Result<bool, String> {
     #[cfg(target_os = "macos")]
     {
         use std::process::Command;
-        
+
         // Define meeting apps at function scope
-        let meeting_apps = ["Discord", "discord", "zoom", "Zoom", "Teams", "Skype", "slack"];
-        
+        let meeting_apps = [
+            // "Discord", "discord", 
+            "zoom", "Zoom", "Teams", "Skype", "slack",
+        ];
+
         // Get network statistics for processes with high UDP traffic
         let nettop_output = Command::new("nettop")
             .args(&["-P", "-l", "1", "-t", "external"])
             .output()
             .map_err(|e| format!("Failed to run nettop: {}", e))?;
-            
+
         println!("DEBUG: Running nettop for bandwidth check");
         if nettop_output.status.success() {
             let nettop_content = String::from_utf8_lossy(&nettop_output.stdout);
-            println!("DEBUG: nettop output length: {} chars", nettop_content.len());
-            
+            println!(
+                "DEBUG: nettop output length: {} chars",
+                nettop_content.len()
+            );
+
             // Parse nettop output to find processes with high network usage
             let mut high_traffic_apps = Vec::new();
-            
+
             for line in nettop_content.lines() {
                 // Skip header lines
                 if line.contains("time") || line.contains("=") || line.trim().is_empty() {
                     continue;
                 }
-                
+
                 // Parse nettop line format: bytes_in/bytes_out for each process
                 for app in &meeting_apps {
                     if line.contains(app) {
@@ -1475,18 +1835,23 @@ async fn check_high_bandwidth_connections() -> Result<bool, String> {
                         if parts.len() >= 3 {
                             // Look for traffic indicators in KB/s or MB/s
                             let traffic_info = parts.join(" ");
-                            
+
                             // Check for continuous high traffic (>50KB/s typically indicates voice call)
                             if traffic_info.contains("KB/s") || traffic_info.contains("MB/s") {
                                 // Parse traffic values
                                 for part in &parts {
                                     if part.contains("KB/s") || part.contains("MB/s") {
-                                        if let Some(traffic_val) = part.strip_suffix("KB/s").or(part.strip_suffix("MB/s")) {
+                                        if let Some(traffic_val) =
+                                            part.strip_suffix("KB/s").or(part.strip_suffix("MB/s"))
+                                        {
                                             if let Ok(val) = traffic_val.parse::<f32>() {
                                                 // Voice calls typically use 50-200 KB/s
                                                 // Video calls use 500KB/s - 2MB/s+
                                                 if val > 50.0 {
-                                                    println!("High traffic detected for {}: {} traffic", app, part);
+                                                    println!(
+                                                        "High traffic detected for {}: {} traffic",
+                                                        app, part
+                                                    );
                                                     high_traffic_apps.push(app.to_string());
                                                     break;
                                                 }
@@ -1500,54 +1865,63 @@ async fn check_high_bandwidth_connections() -> Result<bool, String> {
                     }
                 }
             }
-            
+
             if !high_traffic_apps.is_empty() {
-                println!("Meeting apps with high network traffic: {:?}", high_traffic_apps);
+                println!(
+                    "Meeting apps with high network traffic: {:?}",
+                    high_traffic_apps
+                );
                 return Ok(true);
             }
         }
-        
+
         // Fallback: Use netstat to check for sustained UDP connections
-        let netstat_output = Command::new("netstat")
-            .args(&["-u", "-n"])
-            .output();
-            
+        let netstat_output = Command::new("netstat").args(&["-u", "-n"]).output();
+
         if let Ok(netstat_result) = netstat_output {
             let netstat_content = String::from_utf8_lossy(&netstat_result.stdout);
-            
+
             // Count UDP connections to external addresses
             let mut external_udp_count = 0;
-            
+
             for line in netstat_content.lines() {
-                if line.contains("udp") && !line.contains("127.0.0.1") && !line.contains("localhost") {
+                if line.contains("udp")
+                    && !line.contains("127.0.0.1")
+                    && !line.contains("localhost")
+                {
                     // Look for established UDP connections to external addresses
                     if line.contains("ESTABLISHED") || line.contains("*.*") {
                         external_udp_count += 1;
                     }
                 }
             }
-            
+
             // If we have many external UDP connections, might be in a call
             if external_udp_count > 5 {
-                println!("Many external UDP connections detected: {}", external_udp_count);
-                
+                println!(
+                    "Many external UDP connections detected: {}",
+                    external_udp_count
+                );
+
                 // Additional check: Use lsof to see which processes own these connections
-                let lsof_udp = Command::new("lsof")
-                    .args(&["-i", "UDP", "-n"])
-                    .output();
-                    
+                let lsof_udp = Command::new("lsof").args(&["-i", "UDP", "-n"]).output();
+
                 if let Ok(lsof_result) = lsof_udp {
                     let lsof_content = String::from_utf8_lossy(&lsof_result.stdout);
-                    
+
                     for app in &meeting_apps {
                         if lsof_content.contains(app) {
                             // Count how many UDP connections this app has
-                            let app_udp_count = lsof_content.lines()
+                            let app_udp_count = lsof_content
+                                .lines()
                                 .filter(|line| line.contains(app) && line.contains("UDP"))
                                 .count();
-                                
+
                             if app_udp_count >= 2 {
-                                println!("Meeting app {} has {} UDP connections", app, app_udp_count);
+                                println!(
+                                    "Meeting app {} has {} UDP connections",
+                                    app, app_udp_count
+                                );
                                 return Ok(true);
                             }
                         }
@@ -1555,10 +1929,10 @@ async fn check_high_bandwidth_connections() -> Result<bool, String> {
                 }
             }
         }
-        
+
         Ok(false)
     }
-    
+
     #[cfg(not(target_os = "macos"))]
     {
         Err("High bandwidth detection only supported on macOS".to_string())

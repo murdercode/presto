@@ -1479,20 +1479,14 @@ export class PomodoroTimer {
                 if (this.isInMeeting && this.meetingOverrideEnabled) {
                     // Show meeting icon when in meeting (override active)
                     this.smartIndicator.className = 'ri-video-chat-fill active meeting';
-                    
-                    // Show LIVE text in countdown area
-                    if (this.smartPauseCountdown) {
-                        this.smartPauseCountdown.textContent = 'LIVE';
-                        this.smartPauseCountdown.style.display = 'block';
-                    }
                 } else {
                     // Use filled bulb icon when active
                     this.smartIndicator.className = 'ri-lightbulb-fill active';
-                    
-                    // Hide countdown when not in meeting
-                    if (this.smartPauseCountdown) {
-                        this.smartPauseCountdown.style.display = 'none';
-                    }
+                }
+                
+                // Always hide countdown when smart pause is active (no LIVE text)
+                if (this.smartPauseCountdown) {
+                    this.smartPauseCountdown.style.display = 'none';
                 }
             } else {
                 // Use line bulb icon when inactive
