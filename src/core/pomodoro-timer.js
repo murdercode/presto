@@ -1,6 +1,7 @@
 // Pomodoro Timer Core Module
 const { invoke } = window.__TAURI__.core;
 import { NotificationUtils, TimeUtils, KeyboardUtils } from '../utils/common-utils.js';
+import { MeetingDetector } from '../utils/meeting-detector.js';
 
 export class PomodoroTimer {
     constructor() {
@@ -18,6 +19,11 @@ export class PomodoroTimer {
         this.inactivityThreshold = 30000; // 30 seconds in milliseconds (configurable)
         this.smartPauseCountdownInterval = null;
         this.smartPauseSecondsRemaining = 0;
+        
+        // Meeting detection
+        this.meetingDetector = null;
+        this.isInMeeting = false;
+        this.meetingOverrideEnabled = true; // Skip smart pause during meetings (configurable)
 
         // Session tracking
         this.completedPomodoros = 0;
@@ -180,6 +186,118 @@ export class PomodoroTimer {
 
         // Initialize tray menu state
         this.updateTrayMenu();
+        
+        // Initialize meeting detection
+        this.initializeMeetingDetection();
+    }
+    
+    async initializeMeetingDetection() {
+        try {
+            console.log('🎥 Initializing meeting detection for smart pause integration...');
+            
+            // Create meeting detector instance
+            this.meetingDetector = new MeetingDetector();
+            
+            // Listen for meeting state changes
+            this.meetingDetector.onMeetingStateChange((isInMeeting, wasInMeeting) => {
+                console.log('🎥 Meeting state changed:', { 
+                    isInMeeting, 
+                    wasInMeeting, 
+                    smartPauseEnabled: this.smartPauseEnabled,
+                    meetingOverrideEnabled: this.meetingOverrideEnabled
+                });
+                
+                this.isInMeeting = isInMeeting;
+                
+                if (isInMeeting && !wasInMeeting) {
+                    console.log('🎥 ENTRATA MEETING: L\'utente è entrato in una call/meeting');
+                    this.onMeetingStart();
+                } else if (!isInMeeting && wasInMeeting) {
+                    console.log('🎥 USCITA MEETING: L\'utente è uscito dalla call/meeting');
+                    this.onMeetingEnd();
+                }
+                
+                // Update smart indicator to show meeting state
+                this.updateSmartIndicator();
+            });
+            
+            console.log('🎥 Meeting detection initialized successfully');
+            
+            // Add global testing method for debugging
+            window.testMeetingDetection = () => {
+                if (this.meetingDetector) {
+                    return this.meetingDetector.toggleMeetingStateForTesting();
+                }
+                return false;
+            };
+            
+            // Add manual meeting control methods
+            window.startMeeting = () => {
+                if (this.meetingDetector) {
+                    return this.meetingDetector.setMeetingState(true);
+                }
+                return false;
+            };
+            
+            window.endMeeting = () => {
+                if (this.meetingDetector) {
+                    return this.meetingDetector.setMeetingState(false);
+                }
+                return false;
+            };
+            
+            console.log('🎥 Manual controls available:');
+            console.log('  - window.startMeeting() // Start meeting mode');
+            console.log('  - window.endMeeting()   // End meeting mode');
+            console.log('  - window.testMeetingDetection() // Toggle for testing');
+            
+        } catch (error) {
+            console.error('🎥 Failed to initialize meeting detection:', error);
+            this.meetingDetector = null;
+            this.isInMeeting = false;
+        }
+    }
+    
+    onMeetingStart() {
+        console.log('🎥 Meeting started - checking smart pause interactions...');
+        
+        // If smart pause is enabled and meeting override is active
+        if (this.smartPauseEnabled && this.meetingOverrideEnabled) {
+            console.log('🎥 Smart pause disabled during meeting due to meeting override');
+            
+            // If timer is currently auto-paused due to inactivity, resume it
+            if (this.isAutoPaused) {
+                console.log('🎥 Resuming auto-paused timer because user is in meeting');
+                this.resumeFromAutoPause();
+            }
+            
+            // Clear any existing smart pause timeouts
+            if (this.activityTimeout) {
+                clearTimeout(this.activityTimeout);
+                this.activityTimeout = null;
+                console.log('🎥 Cleared smart pause timeout during meeting');
+            }
+            
+            // Stop smart pause countdown
+            this.stopSmartPauseCountdown();
+        }
+        
+        // Show notification
+        NotificationUtils.showNotificationPing('Meeting detected - Smart pause temporarily disabled 🎥', 'info', this.currentMode);
+    }
+    
+    onMeetingEnd() {
+        console.log('🎥 Meeting ended - re-enabling smart pause if needed...');
+        
+        // If smart pause is enabled and we're in focus mode and timer is running
+        if (this.smartPauseEnabled && this.currentMode === 'focus' && this.isRunning && !this.isPaused) {
+            console.log('🎥 Re-enabling smart pause after meeting ended');
+            // Restart smart pause monitoring
+            this.handleUserActivity();
+        }
+        
+        // Show notification
+        NotificationUtils.showNotificationPing('Meeting ended - Smart pause re-enabled 🎯', 'info', this.currentMode);
     }
 
     setupEventListeners() {
@@ -393,12 +511,18 @@ export class PomodoroTimer {
     }
 
     handleUserActivity() {
-        // console.log('🎯 handleUserActivity called - smartPauseEnabled:', this.smartPauseEnabled, 'isRunning:', this.isRunning, 'currentMode:', this.currentMode, 'isAutoPaused:', this.isAutoPaused);
+        // console.log('🎯 handleUserActivity called - smartPauseEnabled:', this.smartPauseEnabled, 'isRunning:', this.isRunning, 'currentMode:', this.currentMode, 'isAutoPaused:', this.isAutoPaused, 'isInMeeting:', this.isInMeeting);
 
         // if (!this.smartPauseEnabled || !this.isRunning || this.currentMode !== 'focus') {
         //     console.log('❌ handleUserActivity early return due to conditions');
         //     return;
         // }
+        
+        // If user is in meeting and meeting override is enabled, don't start smart pause countdown
+        if (this.isInMeeting && this.meetingOverrideEnabled) {
+            // console.log('🎥 handleUserActivity: Smart pause monitoring disabled during meeting');
+            return;
+        }
 
         // If currently auto-paused, resume the timer
         if (this.isAutoPaused) {
@@ -464,10 +588,16 @@ export class PomodoroTimer {
     }
 
     autoPauseTimer() {
-        console.log('🚨 autoPauseTimer called - isRunning:', this.isRunning, 'isPaused:', this.isPaused, 'isAutoPaused:', this.isAutoPaused, 'currentMode:', this.currentMode);
+        console.log('🚨 autoPauseTimer called - isRunning:', this.isRunning, 'isPaused:', this.isPaused, 'isAutoPaused:', this.isAutoPaused, 'currentMode:', this.currentMode, 'isInMeeting:', this.isInMeeting);
 
         if (!this.isRunning || this.isPaused || this.isAutoPaused || this.currentMode !== 'focus') {
             console.log('❌ autoPauseTimer early return due to conditions');
+            return;
+        }
+        
+        // Check if user is in meeting and meeting override is enabled
+        if (this.isInMeeting && this.meetingOverrideEnabled) {
+            console.log('🎥 autoPauseTimer blocked: User is in meeting and meeting override is enabled');
             return;
         }
 
@@ -1346,13 +1476,37 @@ export class PomodoroTimer {
             this.smartIndicator.style.display = 'block';
 
             if (this.smartPauseEnabled) {
-                // Use filled bulb icon when active
-                this.smartIndicator.className = 'ri-lightbulb-fill active';
+                if (this.isInMeeting && this.meetingOverrideEnabled) {
+                    // Show meeting icon when in meeting (override active)
+                    this.smartIndicator.className = 'ri-video-chat-fill active meeting';
+                    
+                    // Show LIVE text in countdown area
+                    if (this.smartPauseCountdown) {
+                        this.smartPauseCountdown.textContent = 'LIVE';
+                        this.smartPauseCountdown.style.display = 'block';
+                    }
+                } else {
+                    // Use filled bulb icon when active
+                    this.smartIndicator.className = 'ri-lightbulb-fill active';
+                    
+                    // Hide countdown when not in meeting
+                    if (this.smartPauseCountdown) {
+                        this.smartPauseCountdown.style.display = 'none';
+                    }
+                }
             } else {
                 // Use line bulb icon when inactive
                 this.smartIndicator.className = 'ri-lightbulb-line';
+                
+                // Hide countdown when smart pause is disabled
+                if (this.smartPauseCountdown) {
+                    this.smartPauseCountdown.style.display = 'none';
+                }
             }
-            console.log('✅ Smart indicator updated:', this.smartIndicator.className);
+            // Update tooltip based on current state
+            this.updateSmartIndicatorTooltip();
+            
+            console.log('✅ Smart indicator updated:', this.smartIndicator.className, 'isInMeeting:', this.isInMeeting);
         } else {
             console.log('❌ Smart indicator element not found');
         }
@@ -1389,6 +1543,28 @@ export class PomodoroTimer {
     // Legacy method for backward compatibility
     updateSmartIndicator() {
         this.updateSettingIndicators();
+    }
+    
+    // Update smart indicator tooltip based on current state
+    updateSmartIndicatorTooltip() {
+        if (!this.smartIndicator) return;
+        
+        let tooltipText = 'Smart Pause: Click to toggle automatic pause when inactive';
+        
+        if (this.smartPauseEnabled) {
+            if (this.isInMeeting && this.meetingOverrideEnabled) {
+                tooltipText = 'Smart Pause: Temporarily disabled - Meeting detected 🎥';
+            } else {
+                tooltipText = 'Smart Pause: Active - Will auto-pause when inactive';
+            }
+        } else {
+            tooltipText = 'Smart Pause: Disabled - Click to enable';
+        }
+        
+        this.smartIndicator.setAttribute('data-tooltip', tooltipText);
+        
+        // Also update title attribute for fallback
+        this.smartIndicator.setAttribute('title', tooltipText);
     }
 
     // Toggle smart pause on/off
@@ -2138,6 +2314,12 @@ export class PomodoroTimer {
 
         // Enable smart pause using the dedicated method
         await this.enableSmartPause(settings.notifications.smart_pause);
+        
+        // Update meeting override setting
+        this.meetingOverrideEnabled = settings.notifications.meeting_override !== undefined 
+            ? settings.notifications.meeting_override 
+            : true; // Default to enabled
+        console.log('🎥 Meeting override enabled:', this.meetingOverrideEnabled);
 
         // Update all setting indicators to reflect current state
         console.log('🔄 Calling updateSettingIndicators from applySettings...');
@@ -2159,6 +2341,14 @@ export class PomodoroTimer {
         this.stopSmartPauseCountdown();
         this.smartPauseEnabled = false;
         this.inactivityThreshold = 30000; // Reset to default 30 seconds
+        
+        // Clean up meeting detection
+        if (this.meetingDetector) {
+            this.meetingDetector.stop();
+            this.meetingDetector = null;
+        }
+        this.isInMeeting = false;
+        this.meetingOverrideEnabled = true;
 
         // Reset all counters and state
         this.completedPomodoros = 0;

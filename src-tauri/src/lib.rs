@@ -914,7 +914,11 @@ pub fn run() {
                 add_session_tag,
                 get_env_var,
                 write_excel_file,
-                start_oauth_server
+                start_oauth_server,
+                get_platform,
+                execute_shell_command,
+                check_camera_microphone_usage,
+                check_high_bandwidth_connections
             ])
             .setup(|app| {
                 // Track app started event (if enabled)
@@ -1302,4 +1306,261 @@ async fn start_oauth_server(window: tauri::Window) -> Result<u16, String> {
         let _ = window.emit("oauth-callback", url);
     })
     .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+async fn get_platform() -> Result<String, String> {
+    Ok(std::env::consts::OS.to_string())
+}
+
+#[tauri::command]
+async fn execute_shell_command(command: String, args: Vec<String>) -> Result<String, String> {
+    use std::process::Command;
+    
+    let output = Command::new(&command)
+        .args(&args)
+        .output()
+        .map_err(|e| format!("Failed to execute command '{}': {}", command, e))?;
+    
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        // Return stderr as error info but don't fail completely
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Ok(format!("Command failed with stderr: {}", stderr))
+    }
+}
+
+#[tauri::command]
+async fn check_camera_microphone_usage() -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        
+        // Simple and effective: Check if camera or microphone are actively being used
+        
+        // Method 1: Check if ANY process is using the camera
+        let camera_check = Command::new("lsof")
+            .args(&["/dev/video0"])
+            .output();
+            
+        println!("DEBUG: Checking camera usage with lsof /dev/video0");
+        if let Ok(camera_result) = camera_check {
+            let camera_content = String::from_utf8_lossy(&camera_result.stdout);
+            println!("DEBUG: Camera lsof result: '{}'", camera_content);
+            println!("DEBUG: Camera lsof line count: {}", camera_content.lines().count());
+            if !camera_content.trim().is_empty() && camera_content.lines().count() > 1 {
+                println!("Camera in active use: {}", camera_content);
+                return Ok(true);
+            }
+        } else {
+            println!("DEBUG: Camera lsof command failed");
+        }
+        
+        // Method 2: Check for active microphone usage via system profiler
+        let mic_check = Command::new("system_profiler")
+            .args(&["SPAudioDataType", "-json"])
+            .output();
+            
+        println!("DEBUG: Checking audio with system_profiler");
+        if let Ok(mic_result) = mic_check {
+            let mic_content = String::from_utf8_lossy(&mic_result.stdout);
+            println!("DEBUG: Audio contains 'input': {}", mic_content.contains("\"input\""));
+            println!("DEBUG: Audio contains 'Built-in': {}", mic_content.contains("Built-in"));
+            
+            // Look for active input in the audio data
+            if mic_content.contains("\"input\"") && mic_content.contains("Built-in") {
+                // Parse to see if there's actual activity
+                println!("Audio input device detected as active");
+                
+                // Additional check: see if any meeting apps are running with moderate CPU
+                let ps_check = Command::new("ps")
+                    .args(&["aux"])
+                    .output();
+                    
+                if let Ok(ps_result) = ps_check {
+                    let ps_content = String::from_utf8_lossy(&ps_result.stdout);
+                    let meeting_apps = ["zoom", "Teams", "Discord", "Skype", "Chrome", "Safari", "Firefox", "meet"];
+                    
+                    println!("DEBUG: Checking CPU usage for meeting apps");
+                    for line in ps_content.lines() {
+                        for app in &meeting_apps {
+                            if line.to_lowercase().contains(&app.to_lowercase()) {
+                                let parts: Vec<&str> = line.split_whitespace().collect();
+                                if parts.len() >= 3 {
+                                    if let Ok(cpu_usage) = parts[2].parse::<f32>() {
+                                        println!("DEBUG: {} using {}% CPU", app, cpu_usage);
+                                        // Even moderate CPU usage (>5%) with active audio = likely in call
+                                        if cpu_usage > 5.0 {
+                                            println!("Meeting app {} using {}% CPU with active audio", app, cpu_usage);
+                                            return Ok(true);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("DEBUG: system_profiler command failed");
+        }
+        
+        // Method 3: Check for recent AVCaptureSession activity (camera sessions)
+        let capture_check = Command::new("log")
+            .args(&[
+                "show",
+                "--predicate", "eventMessage contains 'AVCaptureSession'",
+                "--style", "syslog",
+                "--last", "10s"
+            ])
+            .output();
+            
+        println!("DEBUG: Checking AVCaptureSession logs");
+        if let Ok(capture_result) = capture_check {
+            let capture_content = String::from_utf8_lossy(&capture_result.stdout);
+            let line_count = capture_content.lines().count();
+            println!("DEBUG: AVCaptureSession log lines: {}", line_count);
+            if line_count > 5 {  // Multiple recent camera events
+                println!("Multiple recent camera capture sessions detected");
+                return Ok(true);
+            }
+        } else {
+            println!("DEBUG: AVCaptureSession log command failed");
+        }
+        
+        Ok(false)
+    }
+    
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Camera/microphone detection only supported on macOS".to_string())
+    }
+}
+
+#[tauri::command]
+async fn check_high_bandwidth_connections() -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        
+        // Define meeting apps at function scope
+        let meeting_apps = ["Discord", "discord", "zoom", "Zoom", "Teams", "Skype", "slack"];
+        
+        // Get network statistics for processes with high UDP traffic
+        let nettop_output = Command::new("nettop")
+            .args(&["-P", "-l", "1", "-t", "external"])
+            .output()
+            .map_err(|e| format!("Failed to run nettop: {}", e))?;
+            
+        println!("DEBUG: Running nettop for bandwidth check");
+        if nettop_output.status.success() {
+            let nettop_content = String::from_utf8_lossy(&nettop_output.stdout);
+            println!("DEBUG: nettop output length: {} chars", nettop_content.len());
+            
+            // Parse nettop output to find processes with high network usage
+            let mut high_traffic_apps = Vec::new();
+            
+            for line in nettop_content.lines() {
+                // Skip header lines
+                if line.contains("time") || line.contains("=") || line.trim().is_empty() {
+                    continue;
+                }
+                
+                // Parse nettop line format: bytes_in/bytes_out for each process
+                for app in &meeting_apps {
+                    if line.contains(app) {
+                        // Extract network traffic data
+                        let parts: Vec<&str> = line.split_whitespace().collect();
+                        if parts.len() >= 3 {
+                            // Look for traffic indicators in KB/s or MB/s
+                            let traffic_info = parts.join(" ");
+                            
+                            // Check for continuous high traffic (>50KB/s typically indicates voice call)
+                            if traffic_info.contains("KB/s") || traffic_info.contains("MB/s") {
+                                // Parse traffic values
+                                for part in &parts {
+                                    if part.contains("KB/s") || part.contains("MB/s") {
+                                        if let Some(traffic_val) = part.strip_suffix("KB/s").or(part.strip_suffix("MB/s")) {
+                                            if let Ok(val) = traffic_val.parse::<f32>() {
+                                                // Voice calls typically use 50-200 KB/s
+                                                // Video calls use 500KB/s - 2MB/s+
+                                                if val > 50.0 {
+                                                    println!("High traffic detected for {}: {} traffic", app, part);
+                                                    high_traffic_apps.push(app.to_string());
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            if !high_traffic_apps.is_empty() {
+                println!("Meeting apps with high network traffic: {:?}", high_traffic_apps);
+                return Ok(true);
+            }
+        }
+        
+        // Fallback: Use netstat to check for sustained UDP connections
+        let netstat_output = Command::new("netstat")
+            .args(&["-u", "-n"])
+            .output();
+            
+        if let Ok(netstat_result) = netstat_output {
+            let netstat_content = String::from_utf8_lossy(&netstat_result.stdout);
+            
+            // Count UDP connections to external addresses
+            let mut external_udp_count = 0;
+            
+            for line in netstat_content.lines() {
+                if line.contains("udp") && !line.contains("127.0.0.1") && !line.contains("localhost") {
+                    // Look for established UDP connections to external addresses
+                    if line.contains("ESTABLISHED") || line.contains("*.*") {
+                        external_udp_count += 1;
+                    }
+                }
+            }
+            
+            // If we have many external UDP connections, might be in a call
+            if external_udp_count > 5 {
+                println!("Many external UDP connections detected: {}", external_udp_count);
+                
+                // Additional check: Use lsof to see which processes own these connections
+                let lsof_udp = Command::new("lsof")
+                    .args(&["-i", "UDP", "-n"])
+                    .output();
+                    
+                if let Ok(lsof_result) = lsof_udp {
+                    let lsof_content = String::from_utf8_lossy(&lsof_result.stdout);
+                    
+                    for app in &meeting_apps {
+                        if lsof_content.contains(app) {
+                            // Count how many UDP connections this app has
+                            let app_udp_count = lsof_content.lines()
+                                .filter(|line| line.contains(app) && line.contains("UDP"))
+                                .count();
+                                
+                            if app_udp_count >= 2 {
+                                println!("Meeting app {} has {} UDP connections", app, app_udp_count);
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(false)
+    }
+    
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("High bandwidth detection only supported on macOS".to_string())
+    }
 }

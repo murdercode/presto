@@ -107,7 +107,8 @@ export class SettingsManager {
                 auto_start_timer: true, // Renamed from auto_start_breaks
                 allow_continuous_sessions: false, // Allow sessions to continue beyond timer
                 smart_pause: false,
-                smart_pause_timeout: 30 // default 30 seconds
+                smart_pause_timeout: 30, // default 30 seconds
+                meeting_override: true // Skip smart pause during meetings
             },
             appearance: {
                 theme: "auto", // auto, light, dark
@@ -173,6 +174,15 @@ export class SettingsManager {
         const timeoutValue = this.settings.notifications.smart_pause_timeout || 30;
         document.getElementById('smart-pause-timeout').value = timeoutValue;
         document.getElementById('timeout-value').textContent = timeoutValue;
+        
+        // Populate meeting override setting
+        const meetingOverrideValue = this.settings.notifications.meeting_override !== undefined 
+            ? this.settings.notifications.meeting_override 
+            : true;
+        const meetingOverrideCheckbox = document.getElementById('meeting-override');
+        if (meetingOverrideCheckbox) {
+            meetingOverrideCheckbox.checked = meetingOverrideValue;
+        }
 
         // Show/hide timeout setting based on smart pause checkbox
         this.toggleTimeoutSetting(this.settings.notifications.smart_pause);
@@ -264,6 +274,25 @@ export class SettingsManager {
                         // Schedule auto-save after the auto-start state is updated
                         this.scheduleAutoSave();
                     });
+                } else {
+                    // If timer is not available, just save the setting
+                    this.scheduleAutoSave();
+                }
+            });
+        }
+
+        // Meeting override checkbox event listener
+        const meetingOverrideCheckbox = document.getElementById('meeting-override');
+        if (meetingOverrideCheckbox) {
+            meetingOverrideCheckbox.addEventListener('change', (e) => {
+                // Update the timer's meeting override setting directly
+                if (window.pomodoroTimer) {
+                    window.pomodoroTimer.meetingOverrideEnabled = e.target.checked;
+                    console.log('🎥 Meeting override setting changed:', e.target.checked);
+                    // Update the indicator to reflect the new state
+                    window.pomodoroTimer.updateSettingIndicators();
+                    // Schedule auto-save after the meeting override state is updated
+                    this.scheduleAutoSave();
                 } else {
                     // If timer is not available, just save the setting
                     this.scheduleAutoSave();
@@ -438,6 +467,12 @@ export class SettingsManager {
             this.settings.notifications.allow_continuous_sessions = document.getElementById('allow-continuous-sessions').checked;
             this.settings.notifications.smart_pause = document.getElementById('smart-pause').checked;
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
+            
+            // Meeting override setting
+            const meetingOverrideCheckbox = document.getElementById('meeting-override');
+            if (meetingOverrideCheckbox) {
+                this.settings.notifications.meeting_override = meetingOverrideCheckbox.checked;
+            }
 
             // Advanced settings
             const debugModeCheckbox = document.getElementById('debug-mode');
@@ -589,7 +624,8 @@ export class SettingsManager {
         // Other notification checkboxes
         const checkboxFields = [
             'sound-notifications',
-            'debug-mode'
+            'debug-mode',
+            'meeting-override'
         ];
 
         checkboxFields.forEach(fieldId => {
@@ -650,6 +686,12 @@ export class SettingsManager {
             this.settings.notifications.allow_continuous_sessions = document.getElementById('allow-continuous-sessions').checked;
             this.settings.notifications.smart_pause = document.getElementById('smart-pause').checked;
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
+            
+            // Meeting override setting
+            const meetingOverrideCheckbox = document.getElementById('meeting-override');
+            if (meetingOverrideCheckbox) {
+                this.settings.notifications.meeting_override = meetingOverrideCheckbox.checked;
+            }
 
             // Advanced settings
             const debugModeCheckbox = document.getElementById('debug-mode');

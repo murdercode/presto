@@ -102,6 +102,20 @@
     opacity: 1;
 }
 
+/* Meeting state for smart indicator */
+.settings-indicators i.meeting {
+    animation: pulse-meeting 2s ease-in-out infinite;
+}
+
+@keyframes pulse-meeting {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
 /* Theme-specific active states */
 .container.focus .settings-indicators i.active {
     color: var(--focus-timer-color);
