@@ -676,6 +676,14 @@ export class PomodoroTimer {
             this.updateButtons();
             this.updateDisplay();
 
+            // Start clock ticking for focus sessions
+            if (this.currentMode === 'focus' && window.audioManager) {
+                window.audioManager.resumeAudioContext();
+                if (window.audioManager.isClockTickingEnabled()) {
+                    window.audioManager.startClockTicking();
+                }
+            }
+
             // Clear the resume flag after UI update
             if (wasResuming) {
                 this._justResumedFromPause = false;
@@ -808,6 +816,12 @@ export class PomodoroTimer {
 
             this.updateButtons();
             this.updateDisplay();
+            
+            // Stop clock ticking when paused
+            if (window.audioManager) {
+                window.audioManager.stopClockTicking();
+            }
+            
             NotificationUtils.showNotificationPing('Timer paused ⏸️');
 
             // Update tray menu
@@ -1026,6 +1040,10 @@ export class PomodoroTimer {
             this.timeRemaining = this.durations[this.currentMode];
             this.updateDisplay();
             this.updateButtons();
+            
+            // Handle audio for mode changes
+            this.handleAudioForModeChange();
+            
             if (shouldSaveSession) {
                 this.saveSessionData();
             }
@@ -2476,6 +2494,12 @@ export class PomodoroTimer {
         // Enable smart pause using the dedicated method
         await this.enableSmartPause(settings.notifications.smart_pause);
 
+        // Apply audio settings
+        if (settings.audio && window.audioManager) {
+            window.audioManager.setClockTickEnabled(settings.audio.clock_tick_enabled || false);
+            window.audioManager.setVolume((settings.audio.clock_tick_volume || 50) / 100);
+        }
+
         // Update all setting indicators to reflect current state
         console.log('🔄 Calling updateSettingIndicators from applySettings...');
         this.updateSettingIndicators();
@@ -2552,5 +2576,22 @@ export class PomodoroTimer {
         this.startMidnightMonitoring();
 
         console.log('Timer reset to initial state');
+    }
+
+    /**
+     * Handle audio based on current mode and running state
+     */
+    handleAudioForModeChange() {
+        if (!window.audioManager) return;
+
+        // Stop ticking if we're not in focus mode or not running
+        if (this.currentMode !== 'focus' || !this.isRunning || this.isPaused) {
+            window.audioManager.stopClockTicking();
+        } else {
+            // Start ticking if we're in focus mode and running
+            if (window.audioManager.isClockTickingEnabled()) {
+                window.audioManager.startClockTicking();
+            }
+        }
     }
 }

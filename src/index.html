@@ -476,6 +476,10 @@
               <i class="ri-notification-line"></i>
               <span>Notifications</span>
             </button>
+            <button class="settings-nav-item nav-item-base" data-category="audio">
+              <i class="ri-volume-up-line"></i>
+              <span>Audio</span>
+            </button>
             <button class="settings-nav-item nav-item-base" data-category="theme">
               <i class="ri-palette-line"></i>
               <span>Theme</span>
@@ -617,6 +621,67 @@
                   Sound Notifications
                 </label>
                 <p class="setting-description">Play a sound when timer phases complete</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Settings -->
+          <div class="settings-category" id="category-audio">
+            <div class="category-header">
+              <h1>Audio Settings</h1>
+              <p class="category-description">Configure sound effects and audio feedback</p>
+            </div>
+
+            <div class="settings-section">
+              <h3>Clock Ticking</h3>
+
+              <div class="setting-item">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="clock-tick-enabled">
+                  <span class="checkmark"></span>
+                  Enable Clock Ticking
+                </label>
+                <p class="setting-description">Play a subtle ticking sound during focus sessions only. This can help maintain concentration and awareness of time passing.</p>
+              </div>
+
+              <div class="setting-item" id="clock-tick-volume-setting">
+                <label for="clock-tick-volume">Ticking Volume: <span id="tick-volume-value">50</span>%</label>
+                <input type="range" id="clock-tick-volume" min="0" max="100" value="50" step="5">
+                <div class="slider-labels">
+                  <span>Silent</span>
+                  <span>Loud</span>
+                </div>
+                <p class="setting-description">Adjust the volume of the clock ticking sound</p>
+              </div>
+
+              <div class="setting-item">
+                <button class="btn-secondary" id="test-clock-tick">
+                  <i class="ri-play-line"></i>
+                  Test Clock Ticking
+                </button>
+                <p class="setting-description">Preview the clock ticking sound with current settings</p>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Sound Effects</h3>
+
+              <div class="setting-item">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="focus-sounds-enabled" checked>
+                  <span class="checkmark"></span>
+                  Focus Session Sounds
+                </label>
+                <p class="setting-description">Enable audio effects during focus sessions (including clock ticking)</p>
+              </div>
+
+              <div class="setting-item">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="break-sounds-enabled" checked>
+                  <span class="checkmark"></span>
+                  Break Session Sounds
+                </label>
+                <p class="setting-description">Enable audio effects during break periods</p>
               </div>
             </div>
           </div>

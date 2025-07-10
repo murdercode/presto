@@ -1267,3 +1267,49 @@
     background: #40318d !important;
   }
 }
+
+/* Audio Settings Styles */
+#clock-tick-volume-setting {
+  margin-top: 1rem;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#clock-tick-volume-setting.hidden {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+}
+
+#test-clock-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#test-clock-tick:hover {
+  background: var(--background-hover);
+  transform: translateY(-1px);
+}
+
+#test-clock-tick:active {
+  transform: translateY(0);
+}
+
+#test-clock-tick i {
+  font-size: 1rem;
+}

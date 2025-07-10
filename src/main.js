@@ -3,6 +3,7 @@ import { NavigationManager } from './managers/navigation-manager.js';
 import { SettingsManager } from './managers/settings-manager.js';
 import { SessionManager } from './managers/session-manager.js';
 import { TeamManager } from './managers/team-manager.js';
+import { audioManager } from './managers/audio-manager.js';
 // Auth manager will be imported after Supabase is loaded
 import { PomodoroTimer } from './core/pomodoro-timer.js';
 import { NotificationUtils } from './utils/common-utils.js';
@@ -1571,6 +1572,10 @@ async function initializeApplication() {
     settingsManager = new SettingsManager();
     window.settingsManager = settingsManager;
     await settingsManager.init();
+
+    // Initialize audio manager
+    console.log('🔊 Initializing Audio Manager...');
+    window.audioManager = audioManager;
 
     // Initialize the core timer
     console.log('⏱️ Initializing Pomodoro Timer...');

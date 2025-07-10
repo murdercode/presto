@@ -80,6 +80,7 @@ export class SettingsManager {
             shortcuts: { ...defaultSettings.shortcuts, ...loadedSettings.shortcuts },
             timer: { ...defaultSettings.timer, ...loadedSettings.timer },
             notifications: { ...defaultSettings.notifications, ...loadedSettings.notifications },
+            audio: { ...defaultSettings.audio, ...loadedSettings.audio },
             appearance: { ...defaultSettings.appearance, ...loadedSettings.appearance },
             advanced: { ...defaultSettings.advanced, ...loadedSettings.advanced },
             autostart: loadedSettings.autostart !== undefined ? loadedSettings.autostart : defaultSettings.autostart,
@@ -109,6 +110,12 @@ export class SettingsManager {
                 allow_continuous_sessions: false, // Allow sessions to continue beyond timer
                 smart_pause: false,
                 smart_pause_timeout: 30 // default 30 seconds
+            },
+            audio: {
+                clock_tick_enabled: false, // Clock ticking disabled by default
+                clock_tick_volume: 50, // Volume percentage (0-100)
+                focus_sounds_enabled: true, // Enable sounds during focus sessions
+                break_sounds_enabled: true // Enable sounds during break sessions
             },
             appearance: {
                 theme: "auto", // auto, light, dark
@@ -198,6 +205,9 @@ export class SettingsManager {
 
         // Populate analytics setting
         this.loadAnalyticsSetting();
+
+        // Populate audio settings
+        this.populateAudioSettings();
     }
 
     setupEventListeners() {
@@ -452,6 +462,12 @@ export class SettingsManager {
             this.settings.notifications.smart_pause = document.getElementById('smart-pause').checked;
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
 
+            // Audio settings
+            this.settings.audio.clock_tick_enabled = document.getElementById('clock-tick-enabled').checked;
+            this.settings.audio.clock_tick_volume = parseInt(document.getElementById('clock-tick-volume').value);
+            this.settings.audio.focus_sounds_enabled = document.getElementById('focus-sounds-enabled').checked;
+            this.settings.audio.break_sounds_enabled = document.getElementById('break-sounds-enabled').checked;
+
             // Advanced settings
             const debugModeCheckbox = document.getElementById('debug-mode');
             if (debugModeCheckbox) {
@@ -670,6 +686,12 @@ export class SettingsManager {
             this.settings.notifications.allow_continuous_sessions = document.getElementById('allow-continuous-sessions').checked;
             this.settings.notifications.smart_pause = document.getElementById('smart-pause').checked;
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
+
+            // Audio settings
+            this.settings.audio.clock_tick_enabled = document.getElementById('clock-tick-enabled').checked;
+            this.settings.audio.clock_tick_volume = parseInt(document.getElementById('clock-tick-volume').value);
+            this.settings.audio.focus_sounds_enabled = document.getElementById('focus-sounds-enabled').checked;
+            this.settings.audio.break_sounds_enabled = document.getElementById('break-sounds-enabled').checked;
 
             // Advanced settings
             const debugModeCheckbox = document.getElementById('debug-mode');
@@ -1280,5 +1302,122 @@ export class SettingsManager {
 
         // Re-initialize the theme selector with new compatibility
         this.initializeTimerThemeSelector();
+    }
+
+    // Audio Settings Methods
+    populateAudioSettings() {
+        // Populate clock ticking settings
+        const clockTickEnabled = document.getElementById('clock-tick-enabled');
+        const clockTickVolume = document.getElementById('clock-tick-volume');
+        const tickVolumeValue = document.getElementById('tick-volume-value');
+        const focusSoundsEnabled = document.getElementById('focus-sounds-enabled');
+        const breakSoundsEnabled = document.getElementById('break-sounds-enabled');
+
+        if (clockTickEnabled) {
+            clockTickEnabled.checked = this.settings.audio?.clock_tick_enabled || false;
+        }
+
+        if (clockTickVolume && tickVolumeValue) {
+            const volume = this.settings.audio?.clock_tick_volume || 50;
+            clockTickVolume.value = volume;
+            tickVolumeValue.textContent = volume;
+        }
+
+        if (focusSoundsEnabled) {
+            focusSoundsEnabled.checked = this.settings.audio?.focus_sounds_enabled !== false;
+        }
+
+        if (breakSoundsEnabled) {
+            breakSoundsEnabled.checked = this.settings.audio?.break_sounds_enabled !== false;
+        }
+
+        // Setup audio event listeners
+        this.setupAudioEventListeners();
+    }
+
+    setupAudioEventListeners() {
+        // Clock tick enabled checkbox
+        const clockTickEnabled = document.getElementById('clock-tick-enabled');
+        if (clockTickEnabled) {
+            clockTickEnabled.addEventListener('change', (e) => {
+                this.settings.audio.clock_tick_enabled = e.target.checked;
+                
+                // Update audio manager
+                if (window.audioManager) {
+                    window.audioManager.setClockTickEnabled(e.target.checked);
+                }
+                
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Clock tick volume slider
+        const clockTickVolume = document.getElementById('clock-tick-volume');
+        const tickVolumeValue = document.getElementById('tick-volume-value');
+        if (clockTickVolume && tickVolumeValue) {
+            clockTickVolume.addEventListener('input', (e) => {
+                const volume = parseInt(e.target.value);
+                tickVolumeValue.textContent = volume;
+                this.settings.audio.clock_tick_volume = volume;
+                
+                // Update audio manager
+                if (window.audioManager) {
+                    window.audioManager.setVolume(volume / 100);
+                }
+                
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Focus sounds enabled checkbox
+        const focusSoundsEnabled = document.getElementById('focus-sounds-enabled');
+        if (focusSoundsEnabled) {
+            focusSoundsEnabled.addEventListener('change', (e) => {
+                this.settings.audio.focus_sounds_enabled = e.target.checked;
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Break sounds enabled checkbox
+        const breakSoundsEnabled = document.getElementById('break-sounds-enabled');
+        if (breakSoundsEnabled) {
+            breakSoundsEnabled.addEventListener('change', (e) => {
+                this.settings.audio.break_sounds_enabled = e.target.checked;
+                this.scheduleAutoSave();
+            });
+        }
+
+        // Test clock tick button
+        const testClockTick = document.getElementById('test-clock-tick');
+        if (testClockTick) {
+            testClockTick.addEventListener('click', () => {
+                this.testClockTicking();
+            });
+        }
+    }
+
+    testClockTicking() {
+        if (window.audioManager) {
+            // Resume audio context if needed
+            window.audioManager.resumeAudioContext();
+            
+            // Update volume
+            const volume = this.settings.audio?.clock_tick_volume || 50;
+            window.audioManager.setVolume(volume / 100);
+            
+            // Play a few test ticks
+            let tickCount = 0;
+            const maxTicks = 3;
+            
+            const playTick = () => {
+                if (tickCount < maxTicks) {
+                    window.audioManager.generateTickSound();
+                    tickCount++;
+                    setTimeout(playTick, 1000);
+                }
+            };
+            
+            playTick();
+        }
     }
 }
