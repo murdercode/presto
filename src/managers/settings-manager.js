@@ -113,6 +113,7 @@ export class SettingsManager {
             },
             audio: {
                 clock_tick_enabled: false, // Clock ticking disabled by default
+                clock_tick_sound: 'none', // Clock ticking sound selection
                 clock_tick_volume: 50, // Volume percentage (0-100)
                 focus_sounds_enabled: true, // Enable sounds during focus sessions
                 break_sounds_enabled: true // Enable sounds during break sessions
@@ -463,7 +464,9 @@ export class SettingsManager {
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
 
             // Audio settings
-            this.settings.audio.clock_tick_enabled = document.getElementById('clock-tick-enabled').checked;
+            const clockTickSound = document.getElementById('clock-tick-sound').value;
+            this.settings.audio.clock_tick_enabled = clockTickSound !== 'none';
+            this.settings.audio.clock_tick_sound = clockTickSound;
             this.settings.audio.clock_tick_volume = parseInt(document.getElementById('clock-tick-volume').value);
             this.settings.audio.focus_sounds_enabled = document.getElementById('focus-sounds-enabled').checked;
             this.settings.audio.break_sounds_enabled = document.getElementById('break-sounds-enabled').checked;
@@ -688,7 +691,9 @@ export class SettingsManager {
             this.settings.notifications.smart_pause_timeout = parseInt(document.getElementById('smart-pause-timeout').value);
 
             // Audio settings
-            this.settings.audio.clock_tick_enabled = document.getElementById('clock-tick-enabled').checked;
+            const clockTickSound = document.getElementById('clock-tick-sound').value;
+            this.settings.audio.clock_tick_enabled = clockTickSound !== 'none';
+            this.settings.audio.clock_tick_sound = clockTickSound;
             this.settings.audio.clock_tick_volume = parseInt(document.getElementById('clock-tick-volume').value);
             this.settings.audio.focus_sounds_enabled = document.getElementById('focus-sounds-enabled').checked;
             this.settings.audio.break_sounds_enabled = document.getElementById('break-sounds-enabled').checked;
@@ -1307,14 +1312,14 @@ export class SettingsManager {
     // Audio Settings Methods
     populateAudioSettings() {
         // Populate clock ticking settings
-        const clockTickEnabled = document.getElementById('clock-tick-enabled');
+        const clockTickSound = document.getElementById('clock-tick-sound');
         const clockTickVolume = document.getElementById('clock-tick-volume');
         const tickVolumeValue = document.getElementById('tick-volume-value');
         const focusSoundsEnabled = document.getElementById('focus-sounds-enabled');
         const breakSoundsEnabled = document.getElementById('break-sounds-enabled');
 
-        if (clockTickEnabled) {
-            clockTickEnabled.checked = this.settings.audio?.clock_tick_enabled || false;
+        if (clockTickSound) {
+            clockTickSound.value = this.settings.audio?.clock_tick_sound || 'none';
         }
 
         if (clockTickVolume && tickVolumeValue) {
@@ -1333,18 +1338,27 @@ export class SettingsManager {
 
         // Setup audio event listeners
         this.setupAudioEventListeners();
+        
+        // Set initial controls visibility (volume + test button)
+        const isEnabled = this.settings.audio?.clock_tick_sound !== 'none';
+        this.toggleClockTickVolumeVisibility(isEnabled);
     }
 
     setupAudioEventListeners() {
-        // Clock tick enabled checkbox
-        const clockTickEnabled = document.getElementById('clock-tick-enabled');
-        if (clockTickEnabled) {
-            clockTickEnabled.addEventListener('change', (e) => {
-                this.settings.audio.clock_tick_enabled = e.target.checked;
+        // Clock tick sound select
+        const clockTickSound = document.getElementById('clock-tick-sound');
+        if (clockTickSound) {
+            clockTickSound.addEventListener('change', (e) => {
+                const soundValue = e.target.value;
+                this.settings.audio.clock_tick_sound = soundValue;
+                this.settings.audio.clock_tick_enabled = soundValue !== 'none';
+                
+                // Show/hide volume and test controls based on selection
+                this.toggleClockTickVolumeVisibility(soundValue !== 'none');
                 
                 // Update audio manager
                 if (window.audioManager) {
-                    window.audioManager.setClockTickEnabled(e.target.checked);
+                    window.audioManager.setClockTickEnabled(soundValue !== 'none');
                 }
                 
                 this.scheduleAutoSave();
@@ -1418,6 +1432,17 @@ export class SettingsManager {
             };
             
             playTick();
+        }
+    }
+
+    toggleClockTickVolumeVisibility(visible) {
+        const controlsGroup = document.getElementById('clock-tick-controls');
+        if (controlsGroup) {
+            if (visible) {
+                controlsGroup.classList.remove('hidden');
+            } else {
+                controlsGroup.classList.add('hidden');
+            }
         }
     }
 }

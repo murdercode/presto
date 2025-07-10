@@ -636,30 +636,32 @@
               <h3>Clock Ticking</h3>
 
               <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="clock-tick-enabled">
-                  <span class="checkmark"></span>
-                  Enable Clock Ticking
-                </label>
-                <p class="setting-description">Play a subtle ticking sound during focus sessions only. This can help maintain concentration and awareness of time passing.</p>
+                <label for="clock-tick-sound">Ticking Sound:</label>
+                <select id="clock-tick-sound">
+                  <option value="none">None</option>
+                  <option value="standard">Standard (Synth)</option>
+                </select>
+                <p class="setting-description">Select a ticking sound during focus sessions. This can help maintain concentration and awareness of time passing.</p>
               </div>
 
-              <div class="setting-item" id="clock-tick-volume-setting">
-                <label for="clock-tick-volume">Ticking Volume: <span id="tick-volume-value">50</span>%</label>
-                <input type="range" id="clock-tick-volume" min="0" max="100" value="50" step="5">
-                <div class="slider-labels">
-                  <span>Silent</span>
-                  <span>Loud</span>
+              <div class="setting-item" id="clock-tick-controls">
+                <div class="audio-controls-group">
+                  <div class="volume-control">
+                    <label for="clock-tick-volume">Ticking Volume: <span id="tick-volume-value">50</span>%</label>
+                    <input type="range" id="clock-tick-volume" min="0" max="100" value="50" step="5">
+                    <div class="slider-labels">
+                      <span>Silent</span>
+                      <span>Loud</span>
+                    </div>
+                  </div>
+                  <div class="test-control">
+                    <button class="btn-secondary" id="test-clock-tick">
+                      <i class="ri-play-line"></i>
+                      Test Clock Ticking
+                    </button>
+                  </div>
                 </div>
-                <p class="setting-description">Adjust the volume of the clock ticking sound</p>
-              </div>
-
-              <div class="setting-item">
-                <button class="btn-secondary" id="test-clock-tick">
-                  <i class="ri-play-line"></i>
-                  Test Clock Ticking
-                </button>
-                <p class="setting-description">Preview the clock ticking sound with current settings</p>
+                <p class="setting-description">Adjust the volume and test the clock ticking sound</p>
               </div>
             </div>
 
