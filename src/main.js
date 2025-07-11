@@ -1577,6 +1577,9 @@ async function initializeApplication() {
     console.log('🔊 Initializing Audio Manager...');
     window.audioManager = audioManager;
 
+    // Make NotificationUtils globally accessible
+    window.NotificationUtils = NotificationUtils;
+
     // Initialize the core timer
     console.log('⏱️ Initializing Pomodoro Timer...');
     timer = new PomodoroTimer();

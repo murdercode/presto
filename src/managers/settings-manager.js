@@ -116,7 +116,10 @@ export class SettingsManager {
                 clock_tick_sound: 'none', // Clock ticking sound selection
                 clock_tick_volume: 50, // Volume percentage (0-100)
                 focus_sounds_enabled: true, // Enable sounds during focus sessions
-                break_sounds_enabled: true // Enable sounds during break sessions
+                break_sounds_enabled: true, // Enable sounds during break sessions
+                background_noise_enabled: false, // Background noise disabled by default
+                background_noise_type: 'none', // Background noise type
+                background_noise_volume: 50 // Background noise volume percentage (0-100)
             },
             appearance: {
                 theme: "auto", // auto, light, dark
@@ -470,6 +473,17 @@ export class SettingsManager {
             this.settings.audio.clock_tick_volume = parseInt(document.getElementById('clock-tick-volume').value);
             this.settings.audio.focus_sounds_enabled = document.getElementById('focus-sounds-enabled').checked;
             this.settings.audio.break_sounds_enabled = document.getElementById('break-sounds-enabled').checked;
+            
+            // Background noise settings
+            const backgroundNoiseType = document.getElementById('background-noise-type');
+            if (backgroundNoiseType) {
+                this.settings.audio.background_noise_type = backgroundNoiseType.value;
+                this.settings.audio.background_noise_enabled = backgroundNoiseType.value !== 'none';
+            }
+            const backgroundNoiseVolume = document.getElementById('background-noise-volume');
+            if (backgroundNoiseVolume) {
+                this.settings.audio.background_noise_volume = parseInt(backgroundNoiseVolume.value);
+            }
 
             // Advanced settings
             const debugModeCheckbox = document.getElementById('debug-mode');
@@ -712,6 +726,17 @@ export class SettingsManager {
             console.log('auto_start_timer checkbox:', document.getElementById('auto-start-timer').checked);
             console.log('allow_continuous_sessions checkbox:', document.getElementById('allow-continuous-sessions').checked);
             console.log('smart_pause checkbox:', document.getElementById('smart-pause').checked);
+
+            // Background noise settings
+            const backgroundNoiseType = document.getElementById('background-noise-type');
+            if (backgroundNoiseType) {
+                this.settings.audio.background_noise_type = backgroundNoiseType.value;
+                this.settings.audio.background_noise_enabled = backgroundNoiseType.value !== 'none';
+            }
+            const backgroundNoiseVolume = document.getElementById('background-noise-volume');
+            if (backgroundNoiseVolume) {
+                this.settings.audio.background_noise_volume = parseInt(backgroundNoiseVolume.value);
+            }
 
             // Debug log the full settings object being saved
             console.log('🔧 AutoSave - Full settings object being saved:', this.settings);
@@ -1336,6 +1361,21 @@ export class SettingsManager {
             breakSoundsEnabled.checked = this.settings.audio?.break_sounds_enabled !== false;
         }
 
+        // Populate background noise settings
+        const backgroundNoiseType = document.getElementById('background-noise-type');
+        const backgroundNoiseVolume = document.getElementById('background-noise-volume');
+        const backgroundNoiseVolumeValue = document.getElementById('background-noise-volume-value');
+        
+        if (backgroundNoiseType) {
+            backgroundNoiseType.value = this.settings.audio?.background_noise_type || 'none';
+        }
+        
+        if (backgroundNoiseVolume && backgroundNoiseVolumeValue) {
+            const volume = this.settings.audio?.background_noise_volume || 50;
+            backgroundNoiseVolume.value = volume;
+            backgroundNoiseVolumeValue.textContent = volume;
+        }
+        
         // Setup audio event listeners
         this.setupAudioEventListeners();
         
@@ -1343,9 +1383,16 @@ export class SettingsManager {
         const isEnabled = this.settings.audio?.clock_tick_sound !== 'none';
         this.toggleClockTickVolumeVisibility(isEnabled);
         
-        // Initialize audio manager with current sound type
+        // Set initial background noise controls visibility
+        const isBackgroundNoiseEnabled = this.settings.audio?.background_noise_type !== 'none';
+        this.toggleBackgroundNoiseVolumeVisibility(isBackgroundNoiseEnabled);
+        
+        // Initialize audio manager with current settings
         if (window.audioManager) {
             window.audioManager.setClockTickSound(this.settings.audio?.clock_tick_sound || 'none');
+            window.audioManager.setBackgroundNoiseType(this.settings.audio?.background_noise_type || 'none');
+            window.audioManager.setBackgroundNoiseVolume((this.settings.audio?.background_noise_volume || 50) / 100);
+            window.audioManager.setBackgroundNoiseEnabled(this.settings.audio?.background_noise_enabled || false);
         }
     }
 
@@ -1414,6 +1461,47 @@ export class SettingsManager {
                 this.testClockTicking();
             });
         }
+        
+        // Background noise type select
+        const backgroundNoiseType = document.getElementById('background-noise-type');
+        if (backgroundNoiseType) {
+            backgroundNoiseType.addEventListener('change', (e) => {
+                const noiseValue = e.target.value;
+                console.log(`⚙️ Settings: Background noise changed to "${noiseValue}"`);
+                
+                this.settings.audio.background_noise_type = noiseValue;
+                this.settings.audio.background_noise_enabled = noiseValue !== 'none';
+                
+                // Show/hide volume and test controls based on selection
+                this.toggleBackgroundNoiseVolumeVisibility(noiseValue !== 'none');
+                
+                // Update audio manager immediately (before auto-save to prevent loops)
+                if (window.audioManager) {
+                    console.log(`⚙️ Settings: Updating audio manager with type "${noiseValue}"`);
+                    window.audioManager.setBackgroundNoiseType(noiseValue);
+                }
+                
+                this.scheduleAutoSave();
+            });
+        }
+        
+        // Background noise volume slider
+        const backgroundNoiseVolume = document.getElementById('background-noise-volume');
+        const backgroundNoiseVolumeValue = document.getElementById('background-noise-volume-value');
+        if (backgroundNoiseVolume && backgroundNoiseVolumeValue) {
+            backgroundNoiseVolume.addEventListener('input', (e) => {
+                const volume = parseInt(e.target.value);
+                backgroundNoiseVolumeValue.textContent = volume;
+                this.settings.audio.background_noise_volume = volume;
+                
+                // Update audio manager
+                if (window.audioManager) {
+                    window.audioManager.setBackgroundNoiseVolume(volume / 100);
+                }
+                
+                this.scheduleAutoSave();
+            });
+        }
     }
 
     testClockTicking() {
@@ -1443,6 +1531,17 @@ export class SettingsManager {
 
     toggleClockTickVolumeVisibility(visible) {
         const controlsGroup = document.getElementById('clock-tick-controls');
+        if (controlsGroup) {
+            if (visible) {
+                controlsGroup.classList.remove('hidden');
+            } else {
+                controlsGroup.classList.add('hidden');
+            }
+        }
+    }
+    
+    toggleBackgroundNoiseVolumeVisibility(visible) {
+        const controlsGroup = document.getElementById('background-noise-controls');
         if (controlsGroup) {
             if (visible) {
                 controlsGroup.classList.remove('hidden');

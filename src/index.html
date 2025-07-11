@@ -668,6 +668,38 @@
             </div>
 
             <div class="settings-section">
+              <h3>Background Noise</h3>
+
+              <div class="setting-item">
+                <label for="background-noise-type">Background Noise:</label>
+                <select id="background-noise-type">
+                  <option value="none">None</option>
+                  <option value="rain">Rain</option>
+                  <option value="fire">Fire</option>
+                  <option value="library">Library</option>
+                  <option value="wind">Wind</option>
+                  <option value="storm">Storm</option>
+                  <option value="whitenoise">White Noise</option>
+                </select>
+                <p class="setting-description">Select background noise to play during focus sessions. Can help with concentration and masking distractions.</p>
+              </div>
+
+              <div class="setting-item hidden" id="background-noise-controls">
+                <div class="audio-controls-group">
+                  <div class="volume-control">
+                    <label for="background-noise-volume">Background Volume: <span id="background-noise-volume-value">50</span>%</label>
+                    <input type="range" id="background-noise-volume" min="0" max="100" value="50" step="5">
+                    <div class="slider-labels">
+                      <span>Silent</span>
+                      <span>Loud</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="setting-description">Adjust the volume for background noise during focus sessions</p>
+              </div>
+            </div>
+
+            <div class="settings-section">
               <h3>Sound Effects</h3>
 
               <div class="setting-item">

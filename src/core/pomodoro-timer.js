@@ -676,11 +676,14 @@ export class PomodoroTimer {
             this.updateButtons();
             this.updateDisplay();
 
-            // Start clock ticking for focus sessions
+            // Start audio for focus sessions
             if (this.currentMode === 'focus' && window.audioManager) {
                 window.audioManager.resumeAudioContext();
                 if (window.audioManager.isClockTickingEnabled()) {
                     window.audioManager.startClockTicking();
+                }
+                if (window.audioManager.isBackgroundNoiseEnabled()) {
+                    window.audioManager.startBackgroundNoise();
                 }
             }
 
@@ -817,9 +820,10 @@ export class PomodoroTimer {
             this.updateButtons();
             this.updateDisplay();
             
-            // Stop clock ticking when paused
+            // Stop audio when paused
             if (window.audioManager) {
                 window.audioManager.stopClockTicking();
+                window.audioManager.stopBackgroundNoise();
             }
             
             NotificationUtils.showNotificationPing('Timer paused ⏸️');
@@ -861,6 +865,13 @@ export class PomodoroTimer {
         this.timeRemaining = this.durations[this.currentMode];
         this.updateDisplay();
         this.updateButtons();
+        
+        // Stop all audio when resetting
+        if (window.audioManager) {
+            window.audioManager.stopClockTicking();
+            window.audioManager.stopBackgroundNoise();
+        }
+        
         NotificationUtils.showNotificationPing('Session deleted ❌', 'warning');
 
         // Update tray menu
@@ -2498,6 +2509,9 @@ export class PomodoroTimer {
         if (settings.audio && window.audioManager) {
             window.audioManager.setClockTickEnabled(settings.audio.clock_tick_enabled || false);
             window.audioManager.setVolume((settings.audio.clock_tick_volume || 50) / 100);
+            window.audioManager.setBackgroundNoiseVolume((settings.audio.background_noise_volume || 50) / 100);
+            window.audioManager.setBackgroundNoiseType(settings.audio.background_noise_type || 'none');
+            // NOTE: setBackgroundNoiseType automatically handles enabled state
         }
 
         // Update all setting indicators to reflect current state
@@ -2584,13 +2598,17 @@ export class PomodoroTimer {
     handleAudioForModeChange() {
         if (!window.audioManager) return;
 
-        // Stop ticking if we're not in focus mode or not running
+        // Stop audio if we're not in focus mode or not running
         if (this.currentMode !== 'focus' || !this.isRunning || this.isPaused) {
             window.audioManager.stopClockTicking();
+            window.audioManager.stopBackgroundNoise();
         } else {
-            // Start ticking if we're in focus mode and running
+            // Start audio if we're in focus mode and running
             if (window.audioManager.isClockTickingEnabled()) {
                 window.audioManager.startClockTicking();
+            }
+            if (window.audioManager.isBackgroundNoiseEnabled()) {
+                window.audioManager.startBackgroundNoise();
             }
         }
     }
