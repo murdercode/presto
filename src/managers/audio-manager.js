@@ -10,9 +10,32 @@ export class AudioManager {
         this.isClockTicking = false;
         this.volume = 0.5;
         this.clockTickEnabled = false;
+        this.clockTickSound = 'standard'; // 'standard', 'tetris', or 'none'
         
         // Audio elements for preloaded sounds
         this.audioElements = {};
+        
+        // Tetris theme note sequence (simplified)
+        this.tetrisNotes = [
+            523.25, // C5
+            392.00, // G4
+            415.30, // G#4
+            466.16, // A#4
+            415.30, // G#4
+            392.00, // G4
+            349.23, // F4
+            349.23, // F4
+            415.30, // G#4
+            523.25, // C5
+            466.16, // A#4
+            415.30, // G#4
+            392.00, // G4
+            392.00, // G4
+            415.30, // G#4
+            466.16, // A#4
+            523.25  // C5
+        ];
+        this.tetrisNoteIndex = 0;
         
         // Initialize audio context
         this.initializeAudioContext();
@@ -43,6 +66,21 @@ export class AudioManager {
     generateTickSound() {
         if (!this.audioContext) return;
 
+        switch (this.clockTickSound) {
+            case 'tetris':
+                this.generateTetrisTickSound();
+                break;
+            case 'standard':
+            default:
+                this.generateStandardTickSound();
+                break;
+        }
+    }
+
+    /**
+     * Generate the standard tick sound
+     */
+    generateStandardTickSound() {
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         
@@ -51,7 +89,7 @@ export class AudioManager {
         gainNode.connect(this.audioContext.destination);
         
         // Configure the tick sound with lower frequency
-        oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime); // 400Hz frequency (lower than before)
+        oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
         oscillator.type = 'square';
         
         // Configure volume envelope for a sharp tick
@@ -62,6 +100,35 @@ export class AudioManager {
         // Play the tick sound
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + 0.1);
+    }
+
+    /**
+     * Generate a Tetris-themed tick sound
+     */
+    generateTetrisTickSound() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        // Connect oscillator to gain node to speakers
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Get the current note from the Tetris sequence
+        const frequency = this.tetrisNotes[this.tetrisNoteIndex];
+        this.tetrisNoteIndex = (this.tetrisNoteIndex + 1) % this.tetrisNotes.length;
+        
+        // Configure the sound with Tetris-like characteristics
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        oscillator.type = 'square'; // Retro 8-bit sound
+        
+        // Configure volume envelope for a musical note
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(this.volume * 0.2, this.audioContext.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
+        
+        // Play the note
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.25);
     }
 
     /**
@@ -107,6 +174,19 @@ export class AudioManager {
         
         if (!enabled && this.isClockTicking) {
             this.stopClockTicking();
+        }
+    }
+
+    /**
+     * Set the clock tick sound type
+     * @param {string} soundType - The sound type ('standard', 'tetris', 'none')
+     */
+    setClockTickSound(soundType) {
+        this.clockTickSound = soundType;
+        
+        // Reset Tetris note index when switching to Tetris theme
+        if (soundType === 'tetris') {
+            this.tetrisNoteIndex = 0;
         }
     }
 

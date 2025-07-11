@@ -1,7 +1,7 @@
 // Settings Manager for Global Shortcuts and Preferences
 const { invoke } = window.__TAURI__.core;
-import { NotificationUtils, KeyboardUtils, StorageUtils } from '../utils/common-utils.js';
-import { TIMER_THEMES, getThemeById, getAllThemes, getCompatibleThemes, isThemeCompatible, getDefaultTheme, registerTheme } from '../utils/timer-themes.js';
+import { NotificationUtils } from '../utils/common-utils.js';
+import { getThemeById, getAllThemes, getCompatibleThemes, isThemeCompatible } from '../utils/timer-themes.js';
 import { initializeAutoThemeLoader } from '../utils/theme-loader.js';
 
 export class SettingsManager {
@@ -1018,7 +1018,7 @@ export class SettingsManager {
         // Add event listeners to theme buttons
         const themeButtons = themeSelector.querySelectorAll('.theme-option');
         themeButtons.forEach(button => {
-            button.addEventListener('click', async (e) => {
+            button.addEventListener('click', async () => {
                 const selectedTheme = button.getAttribute('data-theme');
 
                 // Update visual state
@@ -1342,6 +1342,11 @@ export class SettingsManager {
         // Set initial controls visibility (volume + test button)
         const isEnabled = this.settings.audio?.clock_tick_sound !== 'none';
         this.toggleClockTickVolumeVisibility(isEnabled);
+        
+        // Initialize audio manager with current sound type
+        if (window.audioManager) {
+            window.audioManager.setClockTickSound(this.settings.audio?.clock_tick_sound || 'none');
+        }
     }
 
     setupAudioEventListeners() {
@@ -1359,6 +1364,7 @@ export class SettingsManager {
                 // Update audio manager
                 if (window.audioManager) {
                     window.audioManager.setClockTickEnabled(soundValue !== 'none');
+                    window.audioManager.setClockTickSound(soundValue);
                 }
                 
                 this.scheduleAutoSave();
