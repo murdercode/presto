@@ -34,6 +34,169 @@ window.clearShortcut = function (shortcutType) {
   }
 };
 
+// Global functions for background management
+window.addBackground = function (state) {
+  showAddBackgroundModal(state);
+};
+
+window.removeBackground = function (backgroundId, state) {
+  if (confirm('Are you sure you want to remove this background?')) {
+    if (window.backgroundManager) {
+      window.backgroundManager.removeBackground(state, backgroundId);
+      if (window.settingsManager) {
+        window.settingsManager.refreshBackgroundLists();
+      }
+    }
+  }
+};
+
+window.previewBackground = function (backgroundId, state) {
+  if (window.backgroundManager) {
+    const backgrounds = window.backgroundManager.getBackgrounds(state);
+    const background = backgrounds.find(bg => bg.id === backgroundId);
+    if (background) {
+      window.backgroundManager.applyBackground(background);
+      window.backgroundManager.showCopyright(background);
+    }
+  }
+};
+
+window.exportBackgrounds = function () {
+  if (window.backgroundManager) {
+    const data = window.backgroundManager.exportBackgrounds();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'presto-backgrounds.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+};
+
+window.importBackgrounds = function () {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function (e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (window.backgroundManager && window.backgroundManager.importBackgrounds(data)) {
+            if (window.settingsManager) {
+              window.settingsManager.refreshBackgroundLists();
+            }
+            alert('Backgrounds imported successfully!');
+          } else {
+            alert('Failed to import backgrounds. Please check the file format.');
+          }
+        } catch (error) {
+          alert('Invalid file format. Please select a valid background export file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+};
+
+function showAddBackgroundModal(state) {
+  const modal = document.createElement('div');
+  modal.className = 'background-modal';
+  modal.innerHTML = `
+    <div class="background-modal-content">
+      <h3>Add Background for ${state === 'longBreak' ? 'Long Break' : state.charAt(0).toUpperCase() + state.slice(1)} State</h3>
+      <form class="background-form" id="background-form">
+        <div>
+          <label for="bg-file">Select Background File:</label>
+          <input type="file" id="bg-file" accept="image/*,video/*" required>
+          <small style="color: var(--text-light); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+            Supports images (jpg, png, gif, webp) and videos (mp4, webm)
+          </small>
+        </div>
+        <div>
+          <label for="bg-author">Author (optional):</label>
+          <input type="text" id="bg-author" placeholder="Artist or creator name">
+        </div>
+        <div>
+          <label for="bg-work">Work/Title (optional):</label>
+          <input type="text" id="bg-work" placeholder="Work or title name">
+        </div>
+        <div class="background-form-actions">
+          <button type="submit" class="btn-primary">Add Background</button>
+          <button type="button" class="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  // Add event listeners
+  const form = modal.querySelector('#background-form');
+  const cancelBtn = modal.querySelector('.btn-cancel');
+  const fileInput = modal.querySelector('#bg-file');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const file = fileInput.files[0];
+    const author = document.getElementById('bg-author').value;
+    const work = document.getElementById('bg-work').value;
+
+    if (!file) {
+      alert('Please select a background file.');
+      return;
+    }
+
+    // Check file size (max 10MB)
+    // if (file.size > 10 * 1024 * 1024) {
+    //   alert('File size must be less than 10MB.');
+    //   return;
+    // }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const dataUrl = e.target.result;
+      const type = file.type.startsWith('video/') ? 'video' : 'image';
+
+      if (window.backgroundManager) {
+        window.backgroundManager.addBackground(state, {
+          dataUrl,
+          filename: file.name,
+          type,
+          author,
+          work
+        });
+        if (window.settingsManager) {
+          window.settingsManager.refreshBackgroundLists();
+        }
+      }
+
+      document.body.removeChild(modal);
+    };
+
+    reader.onerror = function () {
+      alert('Failed to read the file. Please try again.');
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    document.body.removeChild(modal);
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  });
+
+  document.body.appendChild(modal);
+  setTimeout(() => fileInput.focus(), 100);
+}
+
 window.confirmTotalReset = async function () {
   console.log("confirmTotalReset called"); // Debug log
 
@@ -299,31 +462,31 @@ async function initializeEarlyTheme() {
 
   // Helper function to check if Tauri is available and ready
   function isTauriReady() {
-    return typeof window !== 'undefined' && 
-           window.__TAURI__ && 
-           window.__TAURI__.core && 
-           typeof window.__TAURI__.core.invoke === 'function';
+    return typeof window !== 'undefined' &&
+      window.__TAURI__ &&
+      window.__TAURI__.core &&
+      typeof window.__TAURI__.core.invoke === 'function';
   }
 
   // Helper function to wait for Tauri to be ready (with timeout)
   function waitForTauri(maxWaitTime = 2000) {
     return new Promise((resolve) => {
       const startTime = Date.now();
-      
+
       const checkTauri = () => {
         if (isTauriReady()) {
           resolve(true);
           return;
         }
-        
+
         if (Date.now() - startTime > maxWaitTime) {
           resolve(false);
           return;
         }
-        
+
         setTimeout(checkTauri, 50);
       };
-      
+
       checkTauri();
     });
   }
@@ -331,10 +494,10 @@ async function initializeEarlyTheme() {
   try {
     // Wait for Tauri to be ready before trying to load settings
     const tauriReady = await waitForTauri();
-    
+
     if (tauriReady) {
       console.log('🎨 Tauri is ready, loading theme from settings...');
-      
+
       try {
         const { invoke } = window.__TAURI__.core;
         const savedSettings = await invoke('load_settings');
@@ -349,15 +512,22 @@ async function initializeEarlyTheme() {
         }
 
         // Also initialize timer theme early
+        console.log(`🎨 DEBUG: timerThemeFromSettings value:`, timerThemeFromSettings);
+        console.log(`🎨 DEBUG: savedSettings full object:`, savedSettings);
+        
         if (timerThemeFromSettings) {
           document.documentElement.setAttribute('data-timer-theme', timerThemeFromSettings);
           localStorage.setItem('timer-theme-preference', timerThemeFromSettings);
           console.log(`🎨 Early timer theme loaded from settings: ${timerThemeFromSettings}`);
         } else {
-          // Default to espresso theme
-          document.documentElement.setAttribute('data-timer-theme', 'espresso');
-          localStorage.setItem('timer-theme-preference', 'espresso');
-          console.log(`🎨 Early timer theme initialized to default: espresso`);
+          // Check localStorage first before defaulting
+          const storedTimerTheme = localStorage.getItem('timer-theme-preference');
+          console.log(`🎨 DEBUG: localStorage timer theme:`, storedTimerTheme);
+          
+          const themeToUse = storedTimerTheme || 'espresso';
+          document.documentElement.setAttribute('data-timer-theme', themeToUse);
+          localStorage.setItem('timer-theme-preference', themeToUse);
+          console.log(`🎨 Early timer theme initialized to: ${themeToUse} (from ${storedTimerTheme ? 'localStorage' : 'default'})`);
         }
 
         if (themeFromSettings) {
@@ -382,7 +552,7 @@ async function initializeEarlyTheme() {
   // Initialize timer theme with fallback
   const storedTimerTheme = localStorage.getItem('timer-theme-preference') || 'espresso';
   document.documentElement.setAttribute('data-timer-theme', storedTimerTheme);
-  console.log(`🎨 Early timer theme initialized from localStorage: ${storedTimerTheme}`);
+  console.log(`🎨 Early timer theme initialized from localStorage fallback: ${storedTimerTheme}`);
 }
 
 // Request notification permission using Tauri v2 API
@@ -1467,19 +1637,19 @@ async function initializeApplication() {
     console.log('🚀 Application already fully initialized, skipping...');
     return;
   }
-  
+
   // Prevent concurrent initialization attempts
   if (window._appInitializing) {
     console.log('🚀 Application initialization already in progress, skipping...');
     return;
   }
-  
+
   // Set initialization flag early to prevent race conditions
   window._appInitializing = true;
-  
+
   try {
     console.log('🚀 Initializing Presto application...');
-    
+
     // Show loading state
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'app-loading';
@@ -1512,7 +1682,7 @@ async function initializeApplication() {
       if (stuckOverlay) {
         console.error('⚠️ Initialization timeout - removing loading overlay');
         stuckOverlay.remove();
-        
+
         // Show error message
         NotificationUtils.showNotificationPing('Initialization timed out. Please refresh! 🔄', 'error');
       }
@@ -1598,6 +1768,11 @@ async function initializeApplication() {
     teamManager = new TeamManager();
     window.teamManager = teamManager;
 
+    // Initialize Background Manager
+    console.log('🎨 Initializing Background Manager...');
+    const { backgroundManager } = await import('./managers/background-manager.js');
+    window.backgroundManager = backgroundManager;
+
     // Update Manager already initialized earlier
 
     // Setup global event listeners
@@ -1613,7 +1788,7 @@ async function initializeApplication() {
 
     // Clear safety timeout
     clearTimeout(safetyTimeout);
-    
+
     // Mark as fully initialized
     window._appFullyInitialized = true;
     window._appInitializing = false;
@@ -1629,21 +1804,21 @@ async function initializeApplication() {
 
   } catch (error) {
     console.error('❌ Failed to initialize application:', error);
-    
+
     // Clear safety timeout and remove loading overlay even on error
     clearTimeout(safetyTimeout);
     const loadingOverlayError = document.getElementById('app-loading');
     if (loadingOverlayError) {
       loadingOverlayError.remove();
     }
-    
+
     // Show error notification
     NotificationUtils.showNotificationPing('Failed to initialize app. Please refresh! 🔄', 'error');
-    
+
     // Reset initialization flags on error so user can retry
     window._appInitializing = false;
     window._appFullyInitialized = false;
-    
+
     // Show error screen instead of leaving user with blank screen
     const errorScreen = document.createElement('div');
     errorScreen.id = 'app-error';

@@ -48,6 +48,448 @@
   }
 }
 
+/* Dynamic Theme Background Management */
+.dynamic-backgrounds-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: var(--card-bg);
+}
+
+.backgrounds-header {
+  margin-bottom: 1.5rem;
+}
+
+.backgrounds-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.rotation-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rotation-control label {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.rotation-control input {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.rotation-control span {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.global-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.backgrounds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.background-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.column-header i {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+
+.column-header span {
+  flex: 1;
+}
+
+.btn-add {
+  padding: 0.25rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-add:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.btn-add i {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.background-list {
+  min-height: 150px;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 0.75rem;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.background-list.compact {
+  min-height: 150px;
+}
+
+.background-item {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--hover-bg);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.background-item:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.background-preview {
+  width: 100%;
+  height: 60px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--hover-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  position: relative;
+}
+
+.background-info {
+  padding: 0.5rem;
+}
+
+.background-filename {
+  font-size: 0.75rem;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+  word-break: break-word;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.background-copyright {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-style: italic;
+  line-height: 1.2;
+}
+
+.background-actions {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.background-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.background-item:hover .background-remove {
+  opacity: 1;
+}
+
+.background-remove:hover {
+  background: rgba(192, 57, 43, 0.9);
+}
+
+.background-actions .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.background-controls {
+  text-align: center;
+}
+
+.background-import-export {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.background-import-export .btn-secondary {
+  flex: 1;
+  min-width: 150px;
+}
+
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary.small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--hover-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sm:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.btn-sm.danger {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  color: white;
+}
+
+.btn-sm.danger:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+/* Add Background Modal */
+.background-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.background-modal-content {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+}
+
+.background-modal h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-color);
+  text-align: center;
+}
+
+.background-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.background-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.background-form input,
+.background-form select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.background-form input:focus,
+.background-form select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.background-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.background-form-actions button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.background-form-actions .btn-primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.background-form-actions .btn-primary:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.background-form-actions .btn-cancel {
+  background: var(--hover-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.background-form-actions .btn-cancel:hover {
+  background: var(--border-color);
+}
+
+/* Empty state */
+.background-list-empty {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  color: var(--text-light);
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.background-list-empty i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.background-list-empty div {
+  font-size: 0.8rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .backgrounds-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .background-column:last-child {
+    grid-column: 1 / -1;
+    max-width: 50%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dynamic-backgrounds-card {
+    padding: 1rem;
+  }
+  
+  .backgrounds-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .rotation-control {
+    justify-content: center;
+  }
+  
+  .global-actions {
+    justify-content: center;
+  }
+  
+  .backgrounds-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .background-column:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+  }
+  
+  .background-list {
+    min-height: 120px;
+  }
+}
+
 /* Setting Items - extends base-section styling */
 .setting-item {
   display: flex;

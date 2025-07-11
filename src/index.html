@@ -670,6 +670,69 @@
                   light or dark mode.</p>
               </div>
             </div>
+
+            <!-- Dynamic Theme Backgrounds -->
+            <div class="settings-section" id="dynamic-backgrounds-section" style="display: none;">
+              <h3>Dynamic Theme Backgrounds</h3>
+              
+              <div class="setting-item">
+                <div class="dynamic-backgrounds-card">
+                  <div class="backgrounds-header">
+                    <div class="backgrounds-controls">
+                      <div class="rotation-control">
+                        <label>Rotation every:</label>
+                        <input type="number" id="rotation-duration" min="1" max="60" value="1">
+                        <span>min</span>
+                      </div>
+                      <div class="global-actions">
+                        <button type="button" class="btn-sm" onclick="exportBackgrounds()">
+                          <i class="ri-download-line"></i> Export
+                        </button>
+                        <button type="button" class="btn-sm" onclick="importBackgrounds()">
+                          <i class="ri-upload-line"></i> Import
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="backgrounds-grid">
+                    <div class="background-column">
+                      <div class="column-header">
+                        <i class="ri-focus-3-line"></i>
+                        <span>Focus</span>
+                        <button type="button" class="btn-add" onclick="addBackground('focus')">
+                          <i class="ri-add-line"></i>
+                        </button>
+                      </div>
+                      <div class="background-list compact" id="focus-backgrounds"></div>
+                    </div>
+
+                    <div class="background-column">
+                      <div class="column-header">
+                        <i class="ri-cup-line"></i>
+                        <span>Break</span>
+                        <button type="button" class="btn-add" onclick="addBackground('break')">
+                          <i class="ri-add-line"></i>
+                        </button>
+                      </div>
+                      <div class="background-list compact" id="break-backgrounds"></div>
+                    </div>
+
+                    <div class="background-column">
+                      <div class="column-header">
+                        <i class="ri-time-line"></i>
+                        <span>Long Break</span>
+                        <button type="button" class="btn-add" onclick="addBackground('longBreak')">
+                          <i class="ri-add-line"></i>
+                        </button>
+                      </div>
+                      <div class="background-list compact" id="longBreak-backgrounds"></div>
+                    </div>
+                  </div>
+                </div>
+                <p class="setting-description">Upload custom backgrounds for each timer state. Supports images and videos with automatic rotation.</p>
+              </div>
+            </div>
           </div>
 
           <!-- Automation Settings -->

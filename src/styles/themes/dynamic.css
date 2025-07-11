@@ -1,0 +1,338 @@
+/* Timer Theme: Dynamic
+ * Author: (murdercode@gmail.com)
+ * Description: A theme with background support for each timer state, including video backgrounds with copyright attribution
+ * Supports: Light and Dark mode
+ */
+
+/* Dynamic Theme Colors */
+:root[data-timer-theme="dynamic"] {
+    --focus-color: #e74c3c;
+    --break-color: #2ecc71;
+    --long-break-color: #3498db;
+
+    /* Background Colors - Base dark theme */
+    --focus-bg: #1a1a1a;
+    --break-bg: #1a1a1a;
+    --long-break-bg: #1a1a1a;
+
+    /* Timer Text Colors */
+    --focus-timer-color: #ffffff;
+    --break-timer-color: #ffffff;
+    --long-break-timer-color: #ffffff;
+
+    /* Button Colors */
+    --focus-primary-btn: #e74c3c;
+    --break-primary-btn: #2ecc71;
+    --long-break-primary-btn: #3498db;
+
+    --focus-secondary-btn: rgba(231, 76, 60, 0.1);
+    --break-secondary-btn: rgba(46, 204, 113, 0.1);
+    --long-break-secondary-btn: rgba(52, 152, 219, 0.1);
+
+    /* Shared Component Colors */
+    --shared-bg: #2c2c2c;
+    --shared-border: #444444;
+    --shared-text: #ffffff;
+
+    /* Additional theme colors */
+    --card-bg: #2c2c2c;
+    --card-border: #444444;
+    --stat-border: #444444;
+    --day-stat-bg: #333333;
+    --hover-bg: #383838;
+    --row-bg: rgba(255, 255, 255, 0.05);
+    --row-hover-bg: rgba(255, 255, 255, 0.1);
+    --focus-bg-alpha: rgba(231, 76, 60, 0.2);
+    --text-on-focus: #ffffff;
+
+    /* Settings components */
+    --setting-item-bg: #333333;
+    --setting-item-hover-bg: #383838;
+    --setting-item-hover-border: rgba(255, 255, 255, 0.3);
+    --input-border: #444444;
+    --input-focus-shadow: rgba(231, 76, 60, 0.2);
+}
+
+/* Light mode color adjustments */
+:root[data-timer-theme="dynamic"][data-theme="light"] {
+    /* Background Colors - Light base */
+    --focus-bg: #f8f9fa;
+    --break-bg: #f8f9fa;
+    --long-break-bg: #f8f9fa;
+
+    /* Timer Text Colors - Dark text on light backgrounds */
+    --focus-timer-color: #2c3e50;
+    --break-timer-color: #2c3e50;
+    --long-break-timer-color: #2c3e50;
+
+    /* Shared Component Colors */
+    --shared-bg: #ffffff;
+    --shared-border: #dee2e6;
+    --shared-text: #2c3e50;
+
+    /* Additional theme colors */
+    --card-bg: #ffffff;
+    --card-border: #dee2e6;
+    --stat-border: #dee2e6;
+    --day-stat-bg: #f8f9fa;
+    --hover-bg: #e9ecef;
+    --row-bg: rgba(0, 0, 0, 0.05);
+    --row-hover-bg: rgba(0, 0, 0, 0.1);
+    --focus-bg-alpha: rgba(231, 76, 60, 0.1);
+    --text-on-focus: #ffffff;
+
+    /* Settings components */
+    --setting-item-bg: #f8f9fa;
+    --setting-item-hover-bg: #e9ecef;
+    --setting-item-hover-border: rgba(231, 76, 60, 0.3);
+    --input-border: #ced4da;
+    --input-focus-shadow: rgba(231, 76, 60, 0.2);
+}
+
+/* Base background styling - only for timer view */
+:root[data-timer-theme="dynamic"] #timer-view {
+    background: var(--focus-bg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    transition: background-image 0.5s ease-in-out;
+    position: relative;
+}
+
+/* Ensure timer view takes full viewport when active */
+:root[data-timer-theme="dynamic"] #timer-view.active {
+    min-height: 100vh;
+}
+
+/* Timer state backgrounds - only for timer view */
+:root[data-timer-theme="dynamic"] body.focus #timer-view {
+    background: var(--focus-bg);
+}
+
+:root[data-timer-theme="dynamic"] body.break #timer-view {
+    background: var(--break-bg);
+}
+
+:root[data-timer-theme="dynamic"] body.longBreak #timer-view {
+    background: var(--long-break-bg);
+}
+
+/* Background overlay for better text readability */
+:root[data-timer-theme="dynamic"] .timer-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    border-radius: inherit;
+}
+
+/* Timer display styling */
+:root[data-timer-theme="dynamic"] .timer-minutes,
+:root[data-timer-theme="dynamic"] .timer-seconds {
+    color: var(--focus-timer-color);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.break .timer-minutes,
+:root[data-timer-theme="dynamic"] .timer-container.break .timer-seconds {
+    color: var(--break-timer-color);
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.longBreak .timer-minutes,
+:root[data-timer-theme="dynamic"] .timer-container.longBreak .timer-seconds {
+    color: var(--long-break-timer-color);
+}
+
+:root[data-timer-theme="dynamic"] .timer-status {
+    color: var(--shared-text);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    font-weight: 500;
+}
+
+/* Copyright attribution for video backgrounds */
+:root[data-timer-theme="dynamic"] .background-copyright {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: opacity 0.3s ease;
+}
+
+:root[data-timer-theme="dynamic"] .background-copyright:hover {
+    opacity: 0.8;
+}
+
+/* Button styling */
+:root[data-timer-theme="dynamic"] .control-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+:root[data-timer-theme="dynamic"] .control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-timer-theme="dynamic"] .control-btn.primary {
+    background: var(--focus-primary-btn);
+    border-color: var(--focus-primary-btn);
+    color: white;
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.break .control-btn.primary {
+    background: var(--break-primary-btn);
+    border-color: var(--break-primary-btn);
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.longBreak .control-btn.primary {
+    background: var(--long-break-primary-btn);
+    border-color: var(--long-break-primary-btn);
+}
+
+/* Progress dots styling */
+:root[data-timer-theme="dynamic"] .progress-dot {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+:root[data-timer-theme="dynamic"] .progress-dot.completed {
+    background: var(--focus-color);
+    border-color: var(--focus-color);
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.break .progress-dot.completed {
+    background: var(--break-color);
+    border-color: var(--break-color);
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+}
+
+:root[data-timer-theme="dynamic"] .timer-container.longBreak .progress-dot.completed {
+    background: var(--long-break-color);
+    border-color: var(--long-break-color);
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+}
+
+/* Sidebar styling for Dynamic theme */
+:root[data-timer-theme="dynamic"] .sidebar {
+    background: rgba(44, 44, 44, 0.9);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-timer-theme="dynamic"] .sidebar.focus {
+    border-right-color: var(--focus-color);
+    box-shadow: 2px 0 10px rgba(231, 76, 60, 0.2);
+}
+
+:root[data-timer-theme="dynamic"] .sidebar.break {
+    border-right-color: var(--break-color);
+    box-shadow: 2px 0 10px rgba(46, 204, 113, 0.2);
+}
+
+:root[data-timer-theme="dynamic"] .sidebar.longBreak {
+    border-right-color: var(--long-break-color);
+    box-shadow: 2px 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* Shared Components Styles */
+:root[data-timer-theme="dynamic"] .base-card,
+:root[data-timer-theme="dynamic"] .base-card-compact,
+:root[data-timer-theme="dynamic"] .base-section {
+    background: rgba(44, 44, 44, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+}
+
+:root[data-timer-theme="dynamic"] .stat-card {
+    background: rgba(51, 51, 51, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+}
+
+:root[data-timer-theme="dynamic"] .nav-item-base {
+    color: var(--shared-text);
+    transition: all 0.3s ease;
+}
+
+:root[data-timer-theme="dynamic"] .nav-item-base:hover {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+:root[data-timer-theme="dynamic"] .nav-item-base.active {
+    background: var(--focus-color);
+    color: white;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+/* Input styling */
+:root[data-timer-theme="dynamic"] input[type="text"],
+:root[data-timer-theme="dynamic"] input[type="number"],
+:root[data-timer-theme="dynamic"] textarea,
+:root[data-timer-theme="dynamic"] select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+:root[data-timer-theme="dynamic"] input[type="text"]:focus,
+:root[data-timer-theme="dynamic"] input[type="number"]:focus,
+:root[data-timer-theme="dynamic"] textarea:focus,
+:root[data-timer-theme="dynamic"] select:focus {
+    border-color: var(--focus-color);
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+    outline: none;
+}
+
+/* Scrollbar styling */
+:root[data-timer-theme="dynamic"] ::-webkit-scrollbar {
+    width: 8px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-timer-theme="dynamic"] ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    backdrop-filter: blur(5px);
+}
+
+:root[data-timer-theme="dynamic"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Background transition classes */
+:root[data-timer-theme="dynamic"] .background-transition {
+    transition: background-image 1s ease-in-out;
+}
+
+/* Hidden class for background elements */
+:root[data-timer-theme="dynamic"] .background-hidden {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+:root[data-timer-theme="dynamic"] .background-visible {
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+}

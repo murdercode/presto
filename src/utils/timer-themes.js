@@ -35,6 +35,18 @@ export const TIMER_THEMES = {
             longBreak: '#00cc33'
         }
     },
+    dynamic: {
+        name: 'Dynamic',
+        description: 'A dark theme with background support for each timer state, including video backgrounds with copyright attribution',
+        supports: ['light', 'dark'],
+        isDefault: false,
+        preview: {
+            focus: '#e74c3c',
+            break: '#2ecc71',
+            longBreak: '#3498db'
+        },
+        hasBackgrounds: true
+    },
 };
 
 // Function to dynamically register a new theme

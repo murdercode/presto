@@ -3,6 +3,7 @@ const { invoke } = window.__TAURI__.core;
 import { NotificationUtils, KeyboardUtils, StorageUtils } from '../utils/common-utils.js';
 import { TIMER_THEMES, getThemeById, getAllThemes, getCompatibleThemes, isThemeCompatible, getDefaultTheme, registerTheme } from '../utils/timer-themes.js';
 import { initializeAutoThemeLoader } from '../utils/theme-loader.js';
+import { backgroundManager } from './background-manager.js';
 
 export class SettingsManager {
     constructor() {
@@ -1043,9 +1044,15 @@ export class SettingsManager {
     }
 
     async initializeTimerTheme() {
+        console.log(`🎨 initializeTimerTheme called`);
+        console.log(`🎨 Current settings:`, this.settings);
+        
         // Check if timer theme was already initialized early
         const currentTimerTheme = document.documentElement.getAttribute('data-timer-theme');
         const storedTimerTheme = localStorage.getItem('timer-theme-preference');
+        console.log(`🎨 Current DOM timer theme: ${currentTimerTheme}`);
+        console.log(`🎨 Stored localStorage timer theme: ${storedTimerTheme}`);
+        console.log(`🎨 Settings timer theme: ${this.settings?.appearance?.timer_theme}`);
 
         // If early timer theme was set and matches localStorage, keep it
         if (currentTimerTheme && storedTimerTheme && currentTimerTheme === storedTimerTheme) {
@@ -1066,6 +1073,7 @@ export class SettingsManager {
 
         // Otherwise apply the timer theme from settings or default to espresso
         const timerTheme = this.settings?.appearance?.timer_theme || 'espresso';
+        console.log(`🎨 Will apply timer theme: ${timerTheme}`);
         await this.applyTimerTheme(timerTheme);
     }
 
@@ -1088,6 +1096,9 @@ export class SettingsManager {
 
         console.log(`🎨 Timer theme applied: ${themeId}`);
         console.log(`🎨 DOM attribute check: data-timer-theme="${html.getAttribute('data-timer-theme')}"`);
+
+        // Show/hide dynamic theme background section
+        this.toggleDynamicBackgroundSection(themeId);
 
         // Debug: Check CSS variable values
         const computedStyle = getComputedStyle(html);
@@ -1213,6 +1224,9 @@ export class SettingsManager {
     }
 
     async selectTimerTheme(themeId) {
+        console.log(`🎨 selectTimerTheme called with: ${themeId}`);
+        console.log(`🎨 Current settings before update:`, this.settings);
+        
         // Update visual state
         this.updateTimerThemeSelector(themeId);
 
@@ -1221,15 +1235,18 @@ export class SettingsManager {
 
         // Save to settings
         this.settings.appearance.timer_theme = themeId;
+        console.log(`🎨 Settings after timer_theme update:`, this.settings);
 
         try {
             await invoke('save_settings', { settings: this.settings });
-            console.log(`🎨 Timer theme saved: ${themeId}`);
+            console.log(`🎨 Timer theme saved successfully: ${themeId}`);
+            console.log(`🎨 Complete settings object saved:`, this.settings);
 
             // Show feedback
             NotificationUtils.showNotificationPing(`✓ Timer theme changed to ${getThemeById(themeId).name}`, 'success');
         } catch (error) {
             console.error('Failed to save timer theme setting:', error);
+            console.error('Error details:', error);
             NotificationUtils.showNotificationPing('❌ Failed to save timer theme', 'error');
         }
     }
@@ -1280,5 +1297,79 @@ export class SettingsManager {
 
         // Re-initialize the theme selector with new compatibility
         this.initializeTimerThemeSelector();
+    }
+
+    // Dynamic Theme Background Management
+    toggleDynamicBackgroundSection(themeId) {
+        const section = document.getElementById('dynamic-backgrounds-section');
+        if (!section) return;
+
+        if (themeId === 'dynamic') {
+            section.style.display = 'block';
+            this.initializeDynamicBackgroundUI();
+        } else {
+            section.style.display = 'none';
+        }
+    }
+
+    initializeDynamicBackgroundUI() {
+        console.log('🎨 Initializing Dynamic background UI...');
+        
+        // Initialize rotation duration
+        const rotationInput = document.getElementById('rotation-duration');
+        if (rotationInput) {
+            rotationInput.addEventListener('change', (e) => {
+                const minutes = parseInt(e.target.value);
+                if (minutes > 0) {
+                    backgroundManager.setRotationDuration(minutes);
+                }
+            });
+        }
+
+        // Load and display backgrounds for each state
+        this.refreshBackgroundLists();
+    }
+
+    refreshBackgroundLists() {
+        const states = ['focus', 'break', 'longBreak'];
+        
+        states.forEach(state => {
+            const container = document.getElementById(`${state}-backgrounds`);
+            if (!container) return;
+
+            const backgrounds = backgroundManager.getBackgrounds(state);
+            
+            if (backgrounds.length === 0) {
+                container.innerHTML = `
+                    <div class="background-list-empty">
+                        <i class="ri-image-line"></i>
+                        <div>No backgrounds added yet</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = backgrounds.map(bg => this.createBackgroundItemHTML(bg, state)).join('');
+            }
+        });
+    }
+
+    createBackgroundItemHTML(background, state) {
+        const hasImage = background.url && (background.type === 'image' || background.url.startsWith('data:image'));
+        const hasCopyright = background.author || background.work;
+        const filename = background.filename || 'Custom background';
+        
+        return `
+            <div class="background-item" data-background-id="${background.id}" onclick="previewBackground('${background.id}', '${state}')">
+                <div class="background-preview" style="${hasImage ? `background-image: url('${background.url}')` : ''}">
+                    ${!hasImage ? '<i class="ri-image-line"></i>' : ''}
+                    <button class="background-remove" onclick="event.stopPropagation(); removeBackground('${background.id}', '${state}')">
+                        <i class="ri-close-line"></i>
+                    </button>
+                </div>
+                <div class="background-info">
+                    <div class="background-filename">${filename}</div>
+                    ${hasCopyright ? `<div class="background-copyright">© ${background.author || ''} ${background.work || ''}</div>` : ''}
+                </div>
+            </div>
+        `;
     }
 }
