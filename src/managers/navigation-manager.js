@@ -54,13 +54,16 @@ export class NavigationManager {
         });
         document.querySelector(`[data-view="${view}"]`).classList.add('active');
 
-        // Hide all views
+        // Hide all views and remove active class
         document.querySelectorAll('.view-container').forEach(container => {
             container.classList.add('hidden');
+            container.classList.remove('active');
         });
 
-        // Show selected view
-        document.getElementById(`${view}-view`).classList.remove('hidden');
+        // Show selected view and add active class
+        const targetView = document.getElementById(`${view}-view`);
+        targetView.classList.remove('hidden');
+        targetView.classList.add('active');
         this.currentView = view;
 
         // Handle background based on view

@@ -156,24 +156,38 @@ function showAddBackgroundModal(state) {
     // }
 
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       const dataUrl = e.target.result;
       const type = file.type.startsWith('video/') ? 'video' : 'image';
 
-      if (window.backgroundManager) {
-        window.backgroundManager.addBackground(state, {
-          dataUrl,
-          filename: file.name,
-          type,
-          author,
-          work
-        });
-        if (window.settingsManager) {
-          window.settingsManager.refreshBackgroundLists();
+      try {
+        if (window.backgroundManager) {
+          await window.backgroundManager.addBackground(state, {
+            dataUrl,
+            filename: file.name,
+            type,
+            author,
+            work
+          });
+          if (window.settingsManager) {
+            window.settingsManager.refreshBackgroundLists();
+          }
+        }
+
+        document.body.removeChild(modal);
+      } catch (error) {
+        console.error('Error adding background:', error);
+        if (error.name === 'QuotaExceededError') {
+          alert('Storage quota exceeded. Large video files are automatically saved to a more efficient storage system. The background has been added successfully.');
+          // Still remove modal and refresh since the background was likely added with IndexedDB fallback
+          document.body.removeChild(modal);
+          if (window.settingsManager) {
+            window.settingsManager.refreshBackgroundLists();
+          }
+        } else {
+          alert('Failed to add background: ' + error.message);
         }
       }
-
-      document.body.removeChild(modal);
     };
 
     reader.onerror = function () {

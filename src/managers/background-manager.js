@@ -82,11 +82,14 @@ export class BackgroundManager {
     }
 
     // Load background settings from storage
-    loadBackgroundSettings() {
+    async loadBackgroundSettings() {
         try {
             const saved = localStorage.getItem('dynamic-theme-backgrounds');
             if (saved) {
                 this.backgroundData = JSON.parse(saved);
+                
+                // Load large files from IndexedDB
+                await this.loadLargeFilesFromIndexedDB();
             }
         } catch (error) {
             console.error('Error loading background settings:', error);
@@ -94,16 +97,170 @@ export class BackgroundManager {
     }
 
     // Save background settings
-    saveBackgroundSettings() {
+    async saveBackgroundSettings() {
         try {
-            localStorage.setItem('dynamic-theme-backgrounds', JSON.stringify(this.backgroundData));
+            // Separate small and large files
+            const dataToSave = JSON.parse(JSON.stringify(this.backgroundData)); // Deep clone
+            const largeFiles = [];
+
+            // Check each background and move large ones to IndexedDB
+            ['focus', 'break', 'longBreak'].forEach(state => {
+                dataToSave[state] = dataToSave[state].map(bg => {
+                    // If it's a large data URL (>1MB), save to IndexedDB
+                    if (bg.url && bg.url.startsWith('data:') && bg.url.length > 1024 * 1024) {
+                        largeFiles.push({
+                            id: bg.id,
+                            url: bg.url
+                        });
+                        
+                        // Replace with reference in localStorage data
+                        return {
+                            ...bg,
+                            url: `indexeddb:${bg.id}`,
+                            isLarge: true
+                        };
+                    }
+                    return bg;
+                });
+            });
+
+            // Save large files to IndexedDB
+            if (largeFiles.length > 0) {
+                await this.saveLargeFilesToIndexedDB(largeFiles);
+            }
+
+            // Save the rest to localStorage
+            localStorage.setItem('dynamic-theme-backgrounds', JSON.stringify(dataToSave));
         } catch (error) {
             console.error('Error saving background settings:', error);
+            
+            // Fallback: Try to save without large files
+            try {
+                const fallbackData = JSON.parse(JSON.stringify(this.backgroundData));
+                ['focus', 'break', 'longBreak'].forEach(state => {
+                    fallbackData[state] = fallbackData[state].filter(bg => 
+                        !bg.url || !bg.url.startsWith('data:') || bg.url.length <= 1024 * 1024
+                    );
+                });
+                localStorage.setItem('dynamic-theme-backgrounds', JSON.stringify(fallbackData));
+                
+                alert('Large video files could not be saved due to storage limitations. Only smaller images have been saved.');
+            } catch (fallbackError) {
+                console.error('Fallback save failed:', fallbackError);
+                alert('Failed to save backgrounds due to storage limitations.');
+            }
+        }
+    }
+
+    // IndexedDB operations for large files
+    async openIndexedDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('PrestoBackgrounds', 1);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('backgrounds')) {
+                    db.createObjectStore('backgrounds', { keyPath: 'id' });
+                }
+            };
+        });
+    }
+
+    async saveLargeFilesToIndexedDB(largeFiles) {
+        try {
+            const db = await this.openIndexedDB();
+            const transaction = db.transaction(['backgrounds'], 'readwrite');
+            const store = transaction.objectStore('backgrounds');
+            
+            for (const file of largeFiles) {
+                await new Promise((resolve, reject) => {
+                    const request = store.put(file);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            console.log(`🎨 Saved ${largeFiles.length} large files to IndexedDB`);
+        } catch (error) {
+            console.error('Error saving to IndexedDB:', error);
+            throw error;
+        }
+    }
+
+    async loadLargeFilesFromIndexedDB() {
+        try {
+            const db = await this.openIndexedDB();
+            const transaction = db.transaction(['backgrounds'], 'readonly');
+            const store = transaction.objectStore('backgrounds');
+            
+            // Replace IndexedDB references with actual URLs
+            ['focus', 'break', 'longBreak'].forEach(state => {
+                this.backgroundData[state] = this.backgroundData[state].map(bg => {
+                    if (bg.url && bg.url.startsWith('indexeddb:')) {
+                        const id = bg.url.replace('indexeddb:', '');
+                        
+                        // Load from IndexedDB (async operation)
+                        this.loadSingleFileFromIndexedDB(id, state, bg.id);
+                        
+                        // Return placeholder for now
+                        return {
+                            ...bg,
+                            url: '', // Will be updated when loaded
+                            loading: true
+                        };
+                    }
+                    return bg;
+                });
+            });
+        } catch (error) {
+            console.error('Error loading from IndexedDB:', error);
+        }
+    }
+
+    async loadSingleFileFromIndexedDB(fileId, state, backgroundId) {
+        try {
+            const db = await this.openIndexedDB();
+            const transaction = db.transaction(['backgrounds'], 'readonly');
+            const store = transaction.objectStore('backgrounds');
+            
+            const request = store.get(fileId);
+            request.onsuccess = () => {
+                if (request.result) {
+                    // Update the background data with the loaded URL
+                    const background = this.backgroundData[state].find(bg => bg.id === backgroundId);
+                    if (background) {
+                        background.url = request.result.url;
+                        background.loading = false;
+                        
+                        // Refresh UI if needed
+                        if (window.settingsManager) {
+                            window.settingsManager.refreshBackgroundLists();
+                        }
+                        
+                        // Update current background if this is the active one
+                        if (this.currentTheme === 'dynamic') {
+                            const currentState = this.getCurrentTimerState();
+                            const currentIndex = this.currentBackgroundIndex[currentState];
+                            const currentBackground = this.backgroundData[currentState][currentIndex];
+                            
+                            if (currentBackground && currentBackground.id === backgroundId) {
+                                console.log('🎨 Updating active background after IndexedDB load:', background);
+                                this.updateBackgroundForCurrentState();
+                            }
+                        }
+                    }
+                }
+            };
+        } catch (error) {
+            console.error('Error loading single file from IndexedDB:', error);
         }
     }
 
     // Add background to a specific state
-    addBackground(state, backgroundData) {
+    async addBackground(state, backgroundData) {
         if (!['focus', 'break', 'longBreak'].includes(state)) {
             console.error('Invalid state:', state);
             return false;
@@ -120,7 +277,7 @@ export class BackgroundManager {
         };
 
         this.backgroundData[state].push(background);
-        this.saveBackgroundSettings();
+        await this.saveBackgroundSettings();
         
         console.log(`🎨 Added background to ${state}:`, background);
         return background.id;
@@ -191,8 +348,10 @@ export class BackgroundManager {
 
     // Apply background to timer view only
     applyBackground(background) {
-        // Only apply backgrounds if we're on the timer view and using dynamic theme
-        const currentView = document.querySelector('.view-section.active')?.id;
+        // Check if we're on the timer view - use multiple methods for reliability
+        const currentView = document.querySelector('.view-section.active')?.id || 
+                           document.querySelector('.view-container:not(.hidden)')?.id;
+        
         if (currentView !== 'timer-view' || this.currentTheme !== 'dynamic') {
             return;
         }
@@ -200,10 +359,18 @@ export class BackgroundManager {
         const timerView = document.getElementById('timer-view');
         if (!timerView) return;
         
-        if (background.type === 'video' && background.url.startsWith('data:video')) {
+        console.log('🎨 Applying background:', {
+            type: background.type,
+            hasUrl: !!background.url,
+            urlType: background.url ? background.url.substring(0, 20) + '...' : 'none',
+            loading: background.loading,
+            filename: background.filename
+        });
+        
+        if (background.type === 'video' && background.url && (background.url.startsWith('data:video') || background.url.startsWith('blob:'))) {
             // Create video background for timer view
             this.createVideoBackground(timerView, background);
-        } else {
+        } else if (background.url && !background.loading) {
             // Apply image background
             timerView.style.backgroundImage = `url("${background.url}")`;
             timerView.style.backgroundSize = 'cover';
@@ -213,6 +380,10 @@ export class BackgroundManager {
             
             // Remove any existing video background
             this.removeVideoBackground(timerView);
+        } else if (background.loading) {
+            // Background is still loading from IndexedDB, show placeholder
+            console.log('🎨 Background still loading from IndexedDB:', background);
+            this.clearBackground();
         }
     }
 
