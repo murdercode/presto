@@ -1,0 +1,22 @@
+feat:
+
+- Added localization using paraglide.js, languages are English and Italian (AI translation).
+- Added language switcher in settings with relevant CSS file (definitely needs to be adjusted).
+
+explanation:
+
+- Static content is translated on page load.
+- Dynamic content is handled by the companion DynamicTextUpdater.
+- User preferences are persisted across sessions.
+
+- Messages are saved in {locale}.json and accessed using m['parent.child']() function.
+- There is a localization manager (utils/localization.js) which ultimately handles the following:
+
+  - Locale switching
+  - Text updates during runtime (after switching language)
+  - Updates the HTML `lang` tag
+
+- There is also a dynamic text updater (utils/dynamic-text-updater.js) that updates text content when:
+
+  - Timer state changes
+  - DOM elements are added dynamically

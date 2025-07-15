@@ -6,13 +6,14 @@
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build",
+    "build": "paraglide-js compile --project ./project.inlang --outdir ./src\\paraglide && tauri build",
     "build-themes": "node build-themes.js",
     "prebuild": "npm run build-themes",
     "predev": "npm run build-themes"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.5.0"
+    "@tauri-apps/cli": "^2.5.0",
+    "@inlang/paraglide-js": "2.2.0"
   },
   "dependencies": {
     "@aptabase/tauri": "^0.4.1",
