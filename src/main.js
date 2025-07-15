@@ -6,7 +6,7 @@ import { TeamManager } from './managers/team-manager.js';
 // Auth manager will be imported after Supabase is loaded
 import { PomodoroTimer } from './core/pomodoro-timer.js';
 import { NotificationUtils } from './utils/common-utils.js';
-// Removed unused import: updateNotification
+import { localizationManager } from './utils/localization.js';
 
 // Global application state
 let timer = null;
@@ -14,6 +14,9 @@ let navigation = null;
 let settingsManager = null;
 let sessionManager = null;
 let teamManager = null;
+
+// Initialize localization first
+localizationManager.init();
 
 // Global functions for settings (backwards compatibility)
 window.saveSettings = async function () {

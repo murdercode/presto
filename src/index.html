@@ -1,1005 +1,1490 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/localization.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Presto</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
+    <script src="/managers/update-manager-global.js" defer></script>
+    <script src="/managers/tag-manager.js" defer></script>
+    <script type="module" src="/main.js" defer></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Presto</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
-  <script src="/managers/update-manager-global.js" defer></script>
-  <script src="/managers/tag-manager.js" defer></script>
-  <script type="module" src="/main.js" defer></script>
-</head>
-
-<body>
-  <!-- Sidebar -->
-  <nav class="sidebar">
-    <div class="sidebar-icons">
-      <button class="sidebar-icon active" id="timer-nav" data-view="timer" title="Timer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-        </svg>
-      </button>
-      <button class="sidebar-icon" id="calendar-nav" data-view="calendar" title="Calendar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-        </svg>
-      </button>
-      <button class="sidebar-icon" id="team-nav" data-view="team" title="Team (Coming Soon)" disabled
-        style="opacity: 0.5; cursor: not-allowed;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-        </svg>
-      </button>
-    </div>
-
-    <div class="sidebar-bottom">
-      <div class="user-avatar-container" id="user-avatar-container">
-        <button class="user-avatar-btn" id="user-avatar-btn">
-          <img id="user-avatar-img" src="" alt="User Avatar" style="display: none;">
-          <div id="user-avatar-fallback" class="avatar-fallback">
-            <i id="user-guest-icon" class="ri-user-line" style="display: none;"></i>
-            <span id="user-initial" style="display: none;">U</span>
-          </div>
+  <body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-icons">
+        <button
+          class="sidebar-icon active"
+          id="timer-nav"
+          data-view="timer"
+          title="Timer"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
         </button>
-
-        <!-- User dropdown menu -->
-        <div class="user-dropdown" id="user-dropdown" style="display: none;">
-          <div class="user-dropdown-header" id="user-dropdown-header">
-            <span class="user-name" id="user-name">Guest</span>
-            <span class="user-status" id="user-status">Guest Mode</span>
-          </div>
-          <div class="user-dropdown-actions">
-            <button class="user-dropdown-action" id="user-sign-in" style="display: none;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
-              Sign In
-            </button>
-            <button class="user-dropdown-action" id="user-sign-out" style="display: none;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 005.25 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-      <button class="sidebar-icon-large" id="settings-nav" data-view="settings" title="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-        </svg>
-      </button>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <main class="container">
-    <!-- Timer View -->
-    <div class="view-container" id="timer-view">
-      <!-- Progress Dots -->
-      <div class="progress-dots" id="progress-dots">
-        <!-- Dots will be generated dynamically based on daily sessions setting -->
+        <button
+          class="sidebar-icon"
+          id="calendar-nav"
+          data-view="calendar"
+          title="Calendar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+            />
+          </svg>
+        </button>
+        <button
+          class="sidebar-icon"
+          id="team-nav"
+          data-view="team"
+          title="Team (Coming Soon)"
+          disabled
+          style="opacity: 0.5; cursor: not-allowed"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+            />
+          </svg>
+        </button>
       </div>
 
-      <!-- Status Label -->
-      <div style="text-align:center; position: relative">
-        <div class="timer-status-container">
+      <div class="sidebar-bottom">
+        <div class="user-avatar-container" id="user-avatar-container">
+          <button class="user-avatar-btn" id="user-avatar-btn">
+            <img
+              id="user-avatar-img"
+              src=""
+              alt="User Avatar"
+              style="display: none"
+            />
+            <div id="user-avatar-fallback" class="avatar-fallback">
+              <i
+                id="user-guest-icon"
+                class="ri-user-line"
+                style="display: none"
+              ></i>
+              <span id="user-initial" style="display: none">U</span>
+            </div>
+          </button>
 
-          <div class="timer-status clickable" id="timer-status">
-            <i id="status-icon" class="ri-brain-line"></i>
-            <span id="status-text">Focus</span>
-            <i class="ri-arrow-down-s-line tag-dropdown-arrow" id="tag-dropdown-arrow"></i>
+          <!-- User dropdown menu -->
+          <div class="user-dropdown" id="user-dropdown" style="display: none">
+            <div class="user-dropdown-header" id="user-dropdown-header">
+              <span class="user-name" id="user-name">Guest</span>
+              <span class="user-status" id="user-status">Guest Mode</span>
+            </div>
+            <div class="user-dropdown-actions">
+              <button
+                class="user-dropdown-action"
+                id="user-sign-in"
+                style="display: none"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                  />
+                </svg>
+                Sign In
+              </button>
+              <button
+                class="user-dropdown-action"
+                id="user-sign-out"
+                style="display: none"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 005.25 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                  />
+                </svg>
+                Sign Out
+              </button>
+            </div>
           </div>
-
         </div>
-        <!-- Tag Dropdown Menu -->
-        <div class="tag-dropdown-menu" id="tag-dropdown-menu">
-          <div class="tag-dropdown-header">
-            <span>Choose tag</span>
+        <button
+          class="sidebar-icon-large"
+          id="settings-nav"
+          data-view="settings"
+          title="Settings"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+            />
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+      <!-- Timer View -->
+      <div class="view-container" id="timer-view">
+        <!-- Progress Dots -->
+        <div class="progress-dots" id="progress-dots">
+          <!-- Dots will be generated dynamically based on daily sessions setting -->
+        </div>
+
+        <!-- Status Label -->
+        <div style="text-align: center; position: relative">
+          <div class="timer-status-container">
+            <div class="timer-status clickable" id="timer-status">
+              <i id="status-icon" class="ri-brain-line"></i>
+              <span id="status-text">Focus</span>
+              <i
+                class="ri-arrow-down-s-line tag-dropdown-arrow"
+                id="tag-dropdown-arrow"
+              ></i>
+            </div>
           </div>
-          <div class="tag-list" id="tag-list">
-            <!-- Tag items will be populated dynamically -->
+          <!-- Tag Dropdown Menu -->
+          <div class="tag-dropdown-menu" id="tag-dropdown-menu">
+            <div class="tag-dropdown-header">
+              <span>Choose tag</span>
+            </div>
+            <div class="tag-list" id="tag-list">
+              <!-- Tag items will be populated dynamically -->
+            </div>
+            <div class="tag-dropdown-footer">
+              <div class="new-tag-input" id="new-tag-input">
+                <div class="tag-input-row">
+                  <div class="icon-selector-container">
+                    <button class="selected-icon-btn" id="selected-icon-btn">
+                      <i class="ri-brain-line" id="selected-icon-display"></i>
+                      <i class="ri-arrow-down-s-line dropdown-arrow"></i>
+                    </button>
+                    <div
+                      class="icon-selector-dropdown"
+                      id="icon-selector-dropdown"
+                    >
+                      <div class="icon-option" data-icon="ri-brain-line">
+                        <i class="ri-brain-line"></i>
+                      </div>
+                      <div class="icon-option" data-icon="ri-focus-3-line">
+                        <i class="ri-focus-3-line"></i>
+                      </div>
+                      <div class="icon-option" data-icon="ri-lightbulb-line">
+                        <i class="ri-lightbulb-line"></i>
+                      </div>
+                      <div class="emoji-option" data-icon="🧠">🧠</div>
+                      <div class="emoji-option" data-icon="💪">💪</div>
+                      <div class="emoji-option" data-icon="🎯">🎯</div>
+                      <div class="emoji-option" data-icon="⚡">⚡</div>
+                      <div class="emoji-option" data-icon="🔥">🔥</div>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="New tag..."
+                    id="new-tag-name"
+                  />
+                  <button class="create-tag-btn" id="create-tag-btn">+</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="tag-dropdown-footer">
-            <div class="new-tag-input" id="new-tag-input">
-              <div class="tag-input-row">
-                <div class="icon-selector-container">
-                  <button class="selected-icon-btn" id="selected-icon-btn">
-                    <i class="ri-brain-line" id="selected-icon-display"></i>
-                    <i class="ri-arrow-down-s-line dropdown-arrow"></i>
-                  </button>
-                  <div class="icon-selector-dropdown" id="icon-selector-dropdown">
-                    <div class="icon-option" data-icon="ri-brain-line"><i class="ri-brain-line"></i></div>
-                    <div class="icon-option" data-icon="ri-focus-3-line"><i class="ri-focus-3-line"></i></div>
-                    <div class="icon-option" data-icon="ri-lightbulb-line"><i class="ri-lightbulb-line"></i></div>
-                    <div class="emoji-option" data-icon="🧠">🧠</div>
-                    <div class="emoji-option" data-icon="💪">💪</div>
-                    <div class="emoji-option" data-icon="🎯">🎯</div>
-                    <div class="emoji-option" data-icon="⚡">⚡</div>
-                    <div class="emoji-option" data-icon="🔥">🔥</div>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="timer-container">
+          <div class="timer-minutes" id="timer-minutes">25</div>
+          <div class="timer-seconds" id="timer-seconds">00</div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="controls">
+          <button id="stop-btn" class="control-btn">
+            <svg
+              id="stop-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            <svg
+              id="undo-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12l-2-2m0 0l2-2m-2 2h10.5a4.5 4.5 0 110 9h-4"
+              />
+            </svg>
+          </button>
+          <button id="play-pause-btn" class="control-btn primary">
+            <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <svg
+              id="pause-icon"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="display: none"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button id="skip-btn" class="control-btn">
+            <!-- Coffee icon for break -->
+            <i
+              id="skip-coffee-icon"
+              class="ri-cup-line"
+              style="display: none; font-size: 24px"
+            ></i>
+            <!-- Sleep icon for long break -->
+            <i
+              id="skip-sleep-icon"
+              class="ri-moon-line"
+              style="display: none; font-size: 24px"
+            ></i>
+            <!-- Brain icon for focus -->
+            <i
+              id="skip-brain-icon"
+              class="ri-brain-line"
+              style="display: none; font-size: 24px"
+            ></i>
+            <!-- Default skip icon (fallback) -->
+            <svg id="skip-default-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653ZM12.75 5.653c0-1.427 1.529-2.33 2.779-1.643l7.108 3.911a1.125 1.125 0 0 1 0 1.958l-7.108 3.911c-1.25.688-2.779-.214-2.779-1.642V5.653Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Settings Indicators -->
+        <div class="settings-indicators">
+          <!-- Smart Pause Indicator -->
+          <div class="smart-pause-container">
+            <span
+              id="smart-pause-countdown"
+              class="countdown-number"
+              style="display: none"
+            ></span>
+            <i
+              id="smart-indicator"
+              class="ri-lightbulb-line"
+              data-tooltip="Smart Pause: Click to toggle automatic pause when inactive"
+            ></i>
+          </div>
+
+          <!-- Auto-start Indicator -->
+          <i
+            id="auto-start-indicator"
+            class="ri-play-circle-line"
+            data-tooltip="Auto-start: Click to toggle automatic session start"
+          ></i>
+
+          <!-- Continuous Session Indicator -->
+          <i
+            id="continuous-session-indicator"
+            class="ri-repeat-line"
+            data-tooltip="Continuous Sessions: Click to toggle continuous mode"
+          ></i>
+
+          <!-- Timer Adjustment Buttons -->
+          <button
+            class="timer-adjust-btn"
+            id="timer-minus-btn"
+            title="Subtract 5 minutes"
+          >
+            <span>-5</span>
+          </button>
+          <!-- Timer Adjustment Buttons -->
+          <button
+            class="timer-adjust-btn"
+            id="timer-plus-btn"
+            title="Add 5 minutes"
+          >
+            <span>+5</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div class="view-container view-section hidden" id="calendar-view">
+        <h1>Calendar & Statistics</h1>
+
+        <!-- Week Selector -->
+        <div class="week-selector">
+          <button id="prev-week" class="nav-btn">&lt;</button>
+          <div class="week-display">
+            <span id="week-range">10 Jun - 16 Jun 2025</span>
+          </div>
+          <button id="next-week" class="nav-btn">&gt;</button>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="calendar-main-layout">
+          <!-- Left Column: Statistics and Daily Chart -->
+          <div class="calendar-left-column">
+            <!-- Focus Time Summary Card -->
+            <div class="focus-summary-card">
+              <h3>Focus Weekly Summary</h3>
+              <div class="focus-summary-grid">
+                <div class="focus-metric">
+                  <div class="metric-change" id="total-focus-change">
+                    <i class="ri-arrow-up-line"></i>
+                    <span>+15%</span>
+                  </div>
+                  <div class="metric-value" id="total-focus-week">14h 30m</div>
+                  <div class="metric-label">Weekly focus time</div>
+                </div>
+                <div class="focus-metric">
+                  <div class="metric-change" id="avg-focus-change">
+                    <i class="ri-arrow-up-line"></i>
+                    <span>+8%</span>
+                  </div>
+                  <div class="metric-value" id="avg-focus-day">2h 15m</div>
+                  <div class="metric-label">Average focus/day</div>
+                </div>
+                <div class="focus-metric">
+                  <div class="metric-change" id="weekly-sessions-change">
+                    <i class="ri-arrow-up-line"></i>
+                    <span>+25%</span>
+                  </div>
+                  <div class="metric-value" id="weekly-sessions">12</div>
+                  <div class="metric-label">Sessions this week</div>
+                </div>
+                <div class="focus-metric">
+                  <div class="metric-change" id="weekly-focus-change">
+                    <i class="ri-arrow-up-line"></i>
+                    <span>+12%</span>
+                  </div>
+                  <div class="metric-value" id="weekly-focus-time">14h 30m</div>
+                  <div class="metric-label">Weekly total time</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly Sessions Chart -->
+            <div class="weekly-chart-card">
+              <h3>This Week's Sessions</h3>
+              <div class="weekly-chart" id="weekly-chart">
+                <!-- Will be filled by JavaScript with daily session bars -->
+              </div>
+              <div class="week-days-labels">
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+                <span>Sun</span>
+              </div>
+            </div>
+
+            <!-- Daily Development Chart -->
+            <div class="daily-chart-card">
+              <h3>Today's Development</h3>
+              <div class="daily-chart" id="daily-chart">
+                <!-- Will be filled by JavaScript with hourly focus time bars -->
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item">
+                  <span class="legend-color focus"></span>
+                  Focus sessions
+                </span>
+                <span class="legend-item">
+                  <span class="legend-color break"></span>
+                  Break time
+                </span>
+              </div>
+            </div>
+
+            <!-- Tag Usage Pie Chart -->
+            <div class="tag-usage-card">
+              <h3>Tag Usage This Week</h3>
+              <div class="tag-chart-container">
+                <div class="tag-pie-chart" id="tag-pie-chart">
+                  <div class="pie-chart-placeholder">
+                    <i class="ri-pie-chart-line"></i>
+                    <span>No data available</span>
                   </div>
                 </div>
-                <input type="text" placeholder="New tag..." id="new-tag-name">
-                <button class="create-tag-btn" id="create-tag-btn">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Timer Display -->
-      <div class="timer-container">
-        <div class="timer-minutes" id="timer-minutes">25</div>
-        <div class="timer-seconds" id="timer-seconds">00</div>
-      </div>
-
-      <!-- Control Buttons -->
-      <div class="controls">
-        <button id="stop-btn" class="control-btn">
-          <svg id="stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          <svg id="undo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l-2-2m0 0l2-2m-2 2h10.5a4.5 4.5 0 110 9h-4" />
-          </svg>
-        </button>
-        <button id="play-pause-btn" class="control-btn primary">
-          <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-              clip-rule="evenodd" />
-          </svg>
-          <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-            <path fill-rule="evenodd"
-              d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-        <button id="skip-btn" class="control-btn">
-          <!-- Coffee icon for break -->
-          <i id="skip-coffee-icon" class="ri-cup-line" style="display: none; font-size: 24px;"></i>
-          <!-- Sleep icon for long break -->
-          <i id="skip-sleep-icon" class="ri-moon-line" style="display: none; font-size: 24px;"></i>
-          <!-- Brain icon for focus -->
-          <i id="skip-brain-icon" class="ri-brain-line" style="display: none; font-size: 24px;"></i>
-          <!-- Default skip icon (fallback) -->
-          <svg id="skip-default-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653ZM12.75 5.653c0-1.427 1.529-2.33 2.779-1.643l7.108 3.911a1.125 1.125 0 0 1 0 1.958l-7.108 3.911c-1.25.688-2.779-.214-2.779-1.642V5.653Z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Settings Indicators -->
-      <div class="settings-indicators">
-
-        <!-- Smart Pause Indicator -->
-        <div class="smart-pause-container">
-          <span id="smart-pause-countdown" class="countdown-number" style="display: none;"></span>
-          <i id="smart-indicator" class="ri-lightbulb-line"
-            data-tooltip="Smart Pause: Click to toggle automatic pause when inactive"></i>
-        </div>
-
-        <!-- Auto-start Indicator -->
-        <i id="auto-start-indicator" class="ri-play-circle-line"
-          data-tooltip="Auto-start: Click to toggle automatic session start"></i>
-
-        <!-- Continuous Session Indicator -->
-        <i id="continuous-session-indicator" class="ri-repeat-line"
-          data-tooltip="Continuous Sessions: Click to toggle continuous mode"></i>
-
-
-        <!-- Timer Adjustment Buttons -->
-        <button class="timer-adjust-btn" id="timer-minus-btn" title="Subtract 5 minutes">
-          <span>-5</span>
-        </button>
-        <!-- Timer Adjustment Buttons -->
-        <button class="timer-adjust-btn" id="timer-plus-btn" title="Add 5 minutes">
-          <span>+5</span>
-        </button>
-
-      </div>
-    </div>
-
-    <!-- Calendar View -->
-    <div class="view-container view-section hidden" id="calendar-view">
-      <h1>Calendar & Statistics</h1>
-
-      <!-- Week Selector -->
-      <div class="week-selector">
-        <button id="prev-week" class="nav-btn">&lt;</button>
-        <div class="week-display">
-          <span id="week-range">10 Jun - 16 Jun 2025</span>
-        </div>
-        <button id="next-week" class="nav-btn">&gt;</button>
-      </div>
-
-      <!-- Two Column Layout -->
-      <div class="calendar-main-layout">
-        <!-- Left Column: Statistics and Daily Chart -->
-        <div class="calendar-left-column">
-          <!-- Focus Time Summary Card -->
-          <div class="focus-summary-card">
-            <h3>Focus Weekly Summary</h3>
-            <div class="focus-summary-grid">
-              <div class="focus-metric">
-                <div class="metric-change" id="total-focus-change">
-                  <i class="ri-arrow-up-line"></i>
-                  <span>+15%</span>
+                <div class="tag-legend" id="tag-legend">
+                  <!-- Legend items will be populated by JavaScript -->
                 </div>
-                <div class="metric-value" id="total-focus-week">14h 30m</div>
-                <div class="metric-label">Weekly focus time</div>
-              </div>
-              <div class="focus-metric">
-                <div class="metric-change" id="avg-focus-change">
-                  <i class="ri-arrow-up-line"></i>
-                  <span>+8%</span>
-                </div>
-                <div class="metric-value" id="avg-focus-day">2h 15m</div>
-                <div class="metric-label">Average focus/day</div>
-              </div>
-              <div class="focus-metric">
-                <div class="metric-change" id="weekly-sessions-change">
-                  <i class="ri-arrow-up-line"></i>
-                  <span>+25%</span>
-                </div>
-                <div class="metric-value" id="weekly-sessions">12</div>
-                <div class="metric-label">Sessions this week</div>
-              </div>
-              <div class="focus-metric">
-                <div class="metric-change" id="weekly-focus-change">
-                  <i class="ri-arrow-up-line"></i>
-                  <span>+12%</span>
-                </div>
-                <div class="metric-value" id="weekly-focus-time">14h 30m</div>
-                <div class="metric-label">Weekly total time</div>
               </div>
             </div>
           </div>
 
-          <!-- Weekly Sessions Chart -->
-          <div class="weekly-chart-card">
-            <h3>This Week's Sessions</h3>
-            <div class="weekly-chart" id="weekly-chart">
-              <!-- Will be filled by JavaScript with daily session bars -->
-            </div>
-            <div class="week-days-labels">
-              <span>Mon</span>
-              <span>Tue</span>
-              <span>Wed</span>
-              <span>Thu</span>
-              <span>Fri</span>
-              <span>Sat</span>
-              <span>Sun</span>
-            </div>
-          </div>
+          <!-- Right Column: Calendar -->
+          <div class="calendar-right-column">
+            <div class="mini-calendar-container">
+              <div class="calendar-header">
+                <button id="prev-month" class="nav-btn">&lt;</button>
+                <h3 id="current-month">June 2025</h3>
+                <button id="next-month" class="nav-btn">&gt;</button>
+              </div>
+              <div class="calendar-grid" id="calendar-grid">
+                <!-- Will be filled by JavaScript -->
+              </div>
 
-          <!-- Daily Development Chart -->
-          <div class="daily-chart-card">
-            <h3>Today's Development</h3>
-            <div class="daily-chart" id="daily-chart">
-              <!-- Will be filled by JavaScript with hourly focus time bars -->
-            </div>
-            <div class="chart-legend">
-              <span class="legend-item">
-                <span class="legend-color focus"></span>
-                Focus sessions
-              </span>
-              <span class="legend-item">
-                <span class="legend-color break"></span>
-                Break time
-              </span>
-            </div>
-          </div>
-
-          <!-- Tag Usage Pie Chart -->
-          <div class="tag-usage-card">
-            <h3>Tag Usage This Week</h3>
-            <div class="tag-chart-container">
-              <div class="tag-pie-chart" id="tag-pie-chart">
-                <div class="pie-chart-placeholder">
-                  <i class="ri-pie-chart-line"></i>
-                  <span>No data available</span>
+              <!-- Session Details for Selected Day -->
+              <div class="selected-day-details" id="selected-day-details">
+                <div class="sessions-header">
+                  <h4 id="selected-day-title">Today's Sessions</h4>
+                  <button
+                    class="add-session-btn"
+                    id="add-session-btn"
+                    title="Add Session"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6v12m6-6H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <!-- Timeline Container -->
+                <div class="sessions-timeline" id="sessions-timeline">
+                  <!-- Timeline Hours -->
+                  <div class="timeline-hours" id="timeline-hours">
+                    <!-- Will be filled by JavaScript with hour markers -->
+                  </div>
+                  <!-- Timeline Track -->
+                  <div class="timeline-track" id="timeline-track">
+                    <!-- Will show session blocks positioned by time -->
+                  </div>
                 </div>
               </div>
-              <div class="tag-legend" id="tag-legend">
-                <!-- Legend items will be populated by JavaScript -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column: Calendar -->
-        <div class="calendar-right-column">
-          <div class="mini-calendar-container">
-            <div class="calendar-header">
-              <button id="prev-month" class="nav-btn">&lt;</button>
-              <h3 id="current-month">June 2025</h3>
-              <button id="next-month" class="nav-btn">&gt;</button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-              <!-- Will be filled by JavaScript -->
             </div>
 
-            <!-- Session Details for Selected Day -->
-            <div class="selected-day-details" id="selected-day-details">
+            <!-- Sessions History Table -->
+            <div class="sessions-history-card">
               <div class="sessions-header">
-                <h4 id="selected-day-title">Today's Sessions</h4>
-                <button class="add-session-btn" id="add-session-btn" title="Add Session">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
-                  </svg>
-                </button>
-              </div>
-              <!-- Timeline Container -->
-              <div class="sessions-timeline" id="sessions-timeline">
-                <!-- Timeline Hours -->
-                <div class="timeline-hours" id="timeline-hours">
-                  <!-- Will be filled by JavaScript with hour markers -->
+                <h3>Session History</h3>
+                <div class="sessions-controls">
+                  <button
+                    id="export-sessions-btn"
+                    class="export-btn"
+                    title="Export to Excel"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <polyline
+                        points="14,2 14,8 20,8"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <line
+                        x1="16"
+                        y1="13"
+                        x2="8"
+                        y2="13"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <line
+                        x1="16"
+                        y1="17"
+                        x2="8"
+                        y2="17"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <polyline
+                        points="10,9 9,9 8,9"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    Export
+                  </button>
                 </div>
-                <!-- Timeline Track -->
-                <div class="timeline-track" id="timeline-track">
-                  <!-- Will show session blocks positioned by time -->
-                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Sessions History Table -->
-          <div class="sessions-history-card">
-            <div class="sessions-header">
-              <h3>Session History</h3>
-              <div class="sessions-controls">
-                <button id="export-sessions-btn" class="export-btn" title="Export to Excel">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                  </svg>
-                  Export
-                </button>
+              <div class="sessions-table-container">
+                <table class="sessions-table" id="sessions-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Duration</th>
+                      <th>Tags</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sessions-table-body">
+                    <!-- Sessions will be populated by JavaScript -->
+                  </tbody>
+                </table>
               </div>
-            </div>
-            <div class="sessions-table-container">
-              <table class="sessions-table" id="sessions-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Duration</th>
-                    <th>Tags</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="sessions-table-body">
-                  <!-- Sessions will be populated by JavaScript -->
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Team View -->
-    <div class="view-container hidden view-section" id="team-view">
-      <h1 class="page-header">Team Dashboard</h1>
-      <p class="team-subtitle page-subtitle">Monitor your team's focus status in real-time</p>
+      <!-- Team View -->
+      <div class="view-container hidden view-section" id="team-view">
+        <h1 class="page-header">Team Dashboard</h1>
+        <p class="team-subtitle page-subtitle">
+          Monitor your team's focus status in real-time
+        </p>
 
-      <!-- Team Stats Summary -->
-      <div class="team-stats-container stats-grid">
-        <div class="team-stat-card stat-card">
-          <div class="stat-icon">
-            <i class="ri-brain-line"></i>
+        <!-- Team Stats Summary -->
+        <div class="team-stats-container stats-grid">
+          <div class="team-stat-card stat-card">
+            <div class="stat-icon">
+              <i class="ri-brain-line"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number" id="team-focusing">3</span>
+              <span class="stat-label">Focusing</span>
+            </div>
           </div>
-          <div class="stat-info">
-            <span class="stat-number" id="team-focusing">3</span>
-            <span class="stat-label">Focusing</span>
+          <div class="team-stat-card stat-card">
+            <div class="stat-icon">
+              <i class="ri-cup-line"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number" id="team-on-break">2</span>
+              <span class="stat-label">On Break</span>
+            </div>
+          </div>
+          <div class="team-stat-card stat-card">
+            <div class="stat-icon">
+              <i class="ri-lock-line"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number" id="team-privacy">1</span>
+              <span class="stat-label">Privacy Mode</span>
+            </div>
+          </div>
+          <div class="team-stat-card stat-card">
+            <div class="stat-icon">
+              <i class="ri-checkbox-blank-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number" id="team-offline">2</span>
+              <span class="stat-label">Offline</span>
+            </div>
           </div>
         </div>
-        <div class="team-stat-card stat-card">
-          <div class="stat-icon">
-            <i class="ri-cup-line"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number" id="team-on-break">2</span>
-            <span class="stat-label">On Break</span>
-          </div>
-        </div>
-        <div class="team-stat-card stat-card">
-          <div class="stat-icon">
-            <i class="ri-lock-line"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number" id="team-privacy">1</span>
-            <span class="stat-label">Privacy Mode</span>
-          </div>
-        </div>
-        <div class="team-stat-card stat-card">
-          <div class="stat-icon">
-            <i class="ri-checkbox-blank-circle-fill"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number" id="team-offline">2</span>
-            <span class="stat-label">Offline</span>
+
+        <!-- Team Members Grid -->
+        <div class="team-members-container">
+          <h2>Teams Overview</h2>
+          <div class="team-members-grid" id="team-members-grid">
+            <!-- Team sections will be populated by JavaScript -->
           </div>
         </div>
       </div>
 
-      <!-- Team Members Grid -->
-      <div class="team-members-container">
-        <h2>Teams Overview</h2>
-        <div class="team-members-grid" id="team-members-grid">
-          <!-- Team sections will be populated by JavaScript -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Settings View -->
-    <div class="view-container hidden view-section" id="settings-view">
-      <div class="settings-layout">
-
-        <!-- Settings Sidebar -->
-        <div class="settings-sidebar sidebar-base">
-          <h2>Settings</h2>
-          <nav class="settings-nav sidebar-nav">
-            <button class="settings-nav-item nav-item-base active" data-category="general">
-              <i class="ri-timer-line"></i>
-              <span>General</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="shortcuts">
-              <i class="ri-keyboard-line"></i>
-              <span>Shortcuts</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="notifications">
-              <i class="ri-notification-line"></i>
-              <span>Notifications</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="theme">
-              <i class="ri-palette-line"></i>
-              <span>Theme</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="automation">
-              <i class="ri-magic-line"></i>
-              <span>Automation</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="goals">
-              <i class="ri-trophy-line"></i>
-              <span>Goals</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="advanced">
-              <i class="ri-settings-3-line"></i>
-              <span>Advanced</span>
-            </button>
-            <button class="settings-nav-item nav-item-base" data-category="updates">
-              <i class="ri-download-line"></i>
-              <span>Updates</span>
-            </button>
-          </nav>
-        </div>
-
-        <!-- Settings Content -->
-        <div class="settings-content content-main">
-
-          <!-- General Settings (Timer) -->
-          <div class="settings-category active" id="category-general">
-            <div class="category-header">
-              <h1>General Settings</h1>
-              <p class="category-description">Configure timer durations and basic behavior</p>
-            </div>
-
-
-
-            <div class="settings-section base-section">
-              <h3 class="section-header">Timer Durations</h3>
-
-              <div class="setting-item">
-                <label for="focus-duration">Focus Duration (minutes):</label>
-                <input type="number" id="focus-duration" min="1" max="60" value="25">
-                <p class="setting-description">How long should focus sessions last</p>
-              </div>
-
-              <div class="setting-item">
-                <label for="break-duration">Short Break (minutes):</label>
-                <input type="number" id="break-duration" min="1" max="30" value="5">
-                <p class="setting-description">Duration for short breaks between focus sessions</p>
-              </div>
-
-              <div class="setting-item">
-                <label for="long-break-duration">Long Break (minutes):</label>
-                <input type="number" id="long-break-duration" min="1" max="60" value="20">
-                <p class="setting-description">Duration for long breaks after completing a cycle</p>
-              </div>
-
-              <div class="setting-item">
-                <label for="total-sessions">Daily Sessions:</label>
-                <input type="number" id="total-sessions" min="1" max="20" value="10">
-                <p class="setting-description">Number of focus sessions to complete each day</p>
-              </div>
-
-              <div class="setting-item">
-                <label for="max-session-time">Max Session Time (minutes):</label>
-                <input type="number" id="max-session-time" min="30" max="480" value="120">
-                <p class="setting-description">Maximum time per session before auto-pause (default: 2 hours)</p>
-              </div>
-            </div>
+      <!-- Settings View -->
+      <div class="view-container hidden view-section" id="settings-view">
+        <div class="settings-layout">
+          <!-- Settings Sidebar -->
+          <div class="settings-sidebar sidebar-base">
+            <h2>Settings</h2>
+            <nav class="settings-nav sidebar-nav">
+              <button
+                class="settings-nav-item nav-item-base active"
+                data-category="general"
+              >
+                <i class="ri-timer-line"></i>
+                <span>General</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="shortcuts"
+              >
+                <i class="ri-keyboard-line"></i>
+                <span>Shortcuts</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="notifications"
+              >
+                <i class="ri-notification-line"></i>
+                <span>Notifications</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="theme"
+              >
+                <i class="ri-palette-line"></i>
+                <span>Theme</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="automation"
+              >
+                <i class="ri-magic-line"></i>
+                <span>Automation</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="goals"
+              >
+                <i class="ri-trophy-line"></i>
+                <span>Goals</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="advanced"
+              >
+                <i class="ri-settings-3-line"></i>
+                <span>Advanced</span>
+              </button>
+              <button
+                class="settings-nav-item nav-item-base"
+                data-category="updates"
+              >
+                <i class="ri-download-line"></i>
+                <span>Updates</span>
+              </button>
+            </nav>
           </div>
 
-          <!-- Shortcuts Settings -->
-          <div class="settings-category" id="category-shortcuts">
-            <div class="category-header">
-              <h1>Global Shortcuts</h1>
-              <p class="category-description">Configure keyboard shortcuts that work even when the app is in the
-                background</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>Keyboard Shortcuts</h3>
-
-              <div class="shortcut-item">
-                <label for="start-stop-shortcut">Start/Stop Timer:</label>
-                <div class="shortcut-input-container">
-                  <input type="text" id="start-stop-shortcut" class="shortcut-input" readonly
-                    placeholder="CommandOrControl+Alt+Space" value="">
-                  <button class="shortcut-clear" onclick="clearShortcut('start-stop')">×</button>
-                </div>
-                <p class="setting-description">Toggle timer between start and pause states</p>
-              </div>
-
-              <div class="shortcut-item">
-                <label for="reset-shortcut">Delete Session / Undo:</label>
-                <div class="shortcut-input-container">
-                  <input type="text" id="reset-shortcut" class="shortcut-input" readonly
-                    placeholder="CommandOrControl+Alt+R">
-                  <button class="shortcut-clear" onclick="clearShortcut('reset')">×</button>
-                </div>
-                <p class="setting-description">Reset current session or undo during breaks</p>
-              </div>
-
-              <div class="shortcut-item">
-                <label for="skip-shortcut">Save Session:</label>
-                <div class="shortcut-input-container">
-                  <input type="text" id="skip-shortcut" class="shortcut-input" readonly
-                    placeholder="CommandOrControl+Alt+S">
-                  <button class="shortcut-clear" onclick="clearShortcut('skip')">×</button>
-                </div>
-                <p class="setting-description">Skip to next phase and save current progress</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Notifications Settings -->
-          <div class="settings-category" id="category-notifications">
-            <div class="category-header">
-              <h1>Notifications</h1>
-              <p class="category-description">Control how and when you receive notifications</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>Notification Types</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="desktop-notifications" checked>
-                  <span class="checkmark"></span>
-                  Desktop Notifications
-                </label>
-                <p class="setting-description">Show system notifications when timer completes. Browser permission will
-                  be
-                  requested when enabled.</p>
-              </div>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="sound-notifications" checked>
-                  <span class="checkmark"></span>
-                  Sound Notifications
-                </label>
-                <p class="setting-description">Play a sound when timer phases complete</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Theme Settings -->
-          <div class="settings-category" id="category-theme">
-            <div class="category-header">
-              <h1>Theme</h1>
-              <p class="category-description">Customize the appearance and visual style of the application</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>Color Theme</h3>
-
-              <div class="setting-item">
-                <label for="theme-selector">Theme Mode:</label>
-                <div class="theme-selector" id="theme-selector">
-                  <button class="theme-option" data-theme="auto" title="Auto (Follow System)">
-                    <i class="ri-contrast-2-line"></i>
-                    <span>Auto</span>
-                  </button>
-                  <button class="theme-option" data-theme="light" title="Light Mode">
-                    <i class="ri-sun-line"></i>
-                    <span>Light</span>
-                  </button>
-                  <button class="theme-option" data-theme="dark" title="Dark Mode">
-                    <i class="ri-moon-line"></i>
-                    <span>Dark</span>
-                  </button>
-                </div>
-                <!-- Hidden select for backwards compatibility -->
-                <select id="theme-select" style="display: none;">
-                  <option value="auto">Auto (Follow System)</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-                <p class="setting-description">Choose your preferred color theme. Auto will automatically switch between
-                  light and dark mode based on your system preferences.</p>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h3>Timer Colors</h3>
-
-              <div class="setting-item">
-                <label for="timer-theme-selector">Timer Theme:</label>
-                <div class="timer-theme-grid" id="timer-theme-grid">
-                  <!-- Theme options will be populated by JavaScript -->
-                </div>
-                <p class="setting-description">Choose a color theme for your timer sessions. Some themes work only in
-                  light or dark mode.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Automation Settings -->
-          <div class="settings-category" id="category-automation">
-            <div class="category-header">
-              <h1>Automation</h1>
-              <p class="category-description">Configure automatic behaviors and smart features</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>Timer Automation</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="auto-start-timer" checked>
-                  <span class="checkmark"></span>
-                  Auto-start Timer
-                </label>
-                <p class="setting-description">Automatically start the timer when manually skipping to the next session
-                  (using
-                  the skip button).</p>
-              </div>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="allow-continuous-sessions">
-                  <span class="checkmark"></span>
-                  Allow Continuous Sessions
-                </label>
-                <p class="setting-description">Allow all sessions (focus, breaks, and long breaks) to continue beyond
-                  their
-                  timer duration. When enabled, you can manually decide when to move to the next phase instead of being
-                  automatically transitioned.</p>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h3>Smart Features</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="smart-pause">
-                  <span class="checkmark"></span>
-                  Smart Pause (Auto-pause when inactive)
-                </label>
-                <p class="setting-description">Automatically pause the timer during focus sessions when no mouse or
-                  keyboard
-                  activity is detected, and resume when activity resumes. Only works during focus periods, not breaks.
+          <!-- Settings Content -->
+          <div class="settings-content content-main">
+            <!-- General Settings (Timer) -->
+            <div class="settings-category active" id="category-general">
+              <div class="category-header">
+                <h1>General Settings</h1>
+                <p class="category-description">
+                  Configure timer durations and basic behavior
                 </p>
               </div>
 
-              <div class="setting-item" id="smart-pause-timeout-setting">
-                <label for="smart-pause-timeout">Inactivity Timeout: <span id="timeout-value">30</span> seconds</label>
-                <input type="range" id="smart-pause-timeout" min="5" max="120" value="30" step="5">
-                <div class="slider-labels">
-                  <span>5s</span>
-                  <span>2min</span>
+              <div class="settings-section">
+                <h3>Language Settings</h3>
+
+                <div class="setting-item">
+                  <label for="locale-switcher">Language:</label>
+                  <select id="locale-switcher" class="locale-switcher">
+                    <option value="en">English</option>
+                    <option value="it">Italiano</option>
+                  </select>
+                  <p class="setting-description">
+                    Choose your preferred language for the application
+                    interface.
+                  </p>
                 </div>
-                <p class="setting-description">How long to wait before pausing during inactivity</p>
+              </div>
+
+              <div class="settings-section base-section">
+                <h3 class="section-header">Timer Durations</h3>
+
+                <div class="setting-item">
+                  <label for="focus-duration">Focus Duration (minutes):</label>
+                  <input
+                    type="number"
+                    id="focus-duration"
+                    min="1"
+                    max="60"
+                    value="25"
+                  />
+                  <p class="setting-description">
+                    How long should focus sessions last
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label for="break-duration">Short Break (minutes):</label>
+                  <input
+                    type="number"
+                    id="break-duration"
+                    min="1"
+                    max="30"
+                    value="5"
+                  />
+                  <p class="setting-description">
+                    Duration for short breaks between focus sessions
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label for="long-break-duration">Long Break (minutes):</label>
+                  <input
+                    type="number"
+                    id="long-break-duration"
+                    min="1"
+                    max="60"
+                    value="20"
+                  />
+                  <p class="setting-description">
+                    Duration for long breaks after completing a cycle
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label for="total-sessions">Daily Sessions:</label>
+                  <input
+                    type="number"
+                    id="total-sessions"
+                    min="1"
+                    max="20"
+                    value="10"
+                  />
+                  <p class="setting-description">
+                    Number of focus sessions to complete each day
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label for="max-session-time"
+                    >Max Session Time (minutes):</label
+                  >
+                  <input
+                    type="number"
+                    id="max-session-time"
+                    min="30"
+                    max="480"
+                    value="120"
+                  />
+                  <p class="setting-description">
+                    Maximum time per session before auto-pause (default: 2
+                    hours)
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div class="settings-section">
-              <h3>Session Management</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="auto-save-sessions" checked>
-                  <span class="checkmark"></span>
-                  Auto-save Completed Sessions
-                </label>
-                <p class="setting-description">Automatically save session data when timer completes without manual
-                  confirmation.</p>
-              </div>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="prevent-interruptions">
-                  <span class="checkmark"></span>
-                  Prevent Interruptions
-                </label>
-                <p class="setting-description">Show confirmation dialog before allowing session resets during active
-                  focus periods.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Goals Settings -->
-          <div class="settings-category" id="category-goals">
-            <div class="category-header">
-              <h1>Weekly Goals</h1>
-              <p class="category-description">Set your weekly focus time targets and productivity goals</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>Focus Goals</h3>
-
-              <div class="setting-item">
-                <label for="weekly-goal-minutes">Weekly Goal (minutes):</label>
-                <input type="number" id="weekly-goal-minutes" min="30" max="2400" value="125" step="5">
-                <p class="setting-description">Target focus time for Monday through Friday (default: 125 minutes = 5
-                  sessions
-                  of 25 minutes). Saturday and Sunday are excluded from calculation.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Advanced Settings -->
-          <div class="settings-category" id="category-advanced">
-            <div class="category-header">
-              <h1>Advanced Settings</h1>
-              <p class="category-description">Danger zone and advanced configuration options</p>
-            </div>
-
-            <div class="settings-section">
-              <h3>System Integration</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="autostart-enabled">
-                  <span class="checkmark"></span>
-                  Start with System
-                </label>
-                <p class="setting-description">Automatically start Presto when your computer boots up. The app will
-                  start
-                  minimized to the system tray.</p>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h3>Privacy & Analytics</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="analytics-enabled">
-                  <span class="checkmark"></span>
-                  Enable Anonymous Statistics
-                </label>
-                <p class="setting-description">Help improve Presto by sharing anonymous usage statistics. No personal
-                  data is collected.</p>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h3>🔧 Developer Tools</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="debug-mode">
-                  <span class="checkmark"></span>
-                  Debug Mode (3-second timers)
-                </label>
-                <p class="setting-description">Enable debug mode where all timers (focus, break, long break) are set to
-                  3 seconds for rapid testing. Perfect for development and feature testing.</p>
-              </div>
-            </div>
-
-            <div class="settings-section danger-zone">
-              <h3>⚠️ Danger Zone</h3>
-              <p class="settings-description">These actions are irreversible and will permanently delete your data.</p>
-
-              <div class="danger-actions">
-                <button class="btn-danger" id="reset-all-data-btn">
-                  🗑️ Reset All Data
-                </button>
-                <p class="danger-description">
-                  This will permanently delete all your Pomodoro sessions, tasks, statistics, and reset all settings to
-                  default. This action cannot be undone.
+            <!-- Shortcuts Settings -->
+            <div class="settings-category" id="category-shortcuts">
+              <div class="category-header">
+                <h1>Global Shortcuts</h1>
+                <p class="category-description">
+                  Configure keyboard shortcuts that work even when the app is in
+                  the background
                 </p>
               </div>
-            </div>
-          </div>
 
-          <!-- Updates Settings -->
-          <div class="settings-category" id="category-updates">
-            <div class="category-header">
-              <h1>App Updates</h1>
-              <p class="category-description">Manage application updates and version information</p>
-            </div>
+              <div class="settings-section">
+                <h3>Keyboard Shortcuts</h3>
 
-            <div class="settings-section">
-              <h3>Current Version</h3>
-              <div class="setting-item">
-                <div class="version-info">
-                  <div class="current-version">
-                    <span class="version-label">Installed Version:</span>
-                    <span class="version-number" id="current-version">0.1.0</span>
+                <div class="shortcut-item">
+                  <label for="start-stop-shortcut">Start/Stop Timer:</label>
+                  <div class="shortcut-input-container">
+                    <input
+                      type="text"
+                      id="start-stop-shortcut"
+                      class="shortcut-input"
+                      readonly
+                      placeholder="CommandOrControl+Alt+Space"
+                      value=""
+                    />
+                    <button
+                      class="shortcut-clear"
+                      onclick="clearShortcut('start-stop')"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <div class="update-status" id="update-status">
-                    <span class="status-text">Checking for updates...</span>
-                  </div>
+                  <p class="setting-description">
+                    Toggle timer between start and pause states
+                  </p>
                 </div>
-                <div class="version-actions">
-                  <button class="btn btn-primary" id="check-updates-btn">
-                    <i class="ri-refresh-line"></i>
-                    Check for Updates
+
+                <div class="shortcut-item">
+                  <label for="reset-shortcut">Delete Session / Undo:</label>
+                  <div class="shortcut-input-container">
+                    <input
+                      type="text"
+                      id="reset-shortcut"
+                      class="shortcut-input"
+                      readonly
+                      placeholder="CommandOrControl+Alt+R"
+                    />
+                    <button
+                      class="shortcut-clear"
+                      onclick="clearShortcut('reset')"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <p class="setting-description">
+                    Reset current session or undo during breaks
+                  </p>
+                </div>
+
+                <div class="shortcut-item">
+                  <label for="skip-shortcut">Save Session:</label>
+                  <div class="shortcut-input-container">
+                    <input
+                      type="text"
+                      id="skip-shortcut"
+                      class="shortcut-input"
+                      readonly
+                      placeholder="CommandOrControl+Alt+S"
+                    />
+                    <button
+                      class="shortcut-clear"
+                      onclick="clearShortcut('skip')"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <p class="setting-description">
+                    Skip to next phase and save current progress
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notifications Settings -->
+            <div class="settings-category" id="category-notifications">
+              <div class="category-header">
+                <h1>Notifications</h1>
+                <p class="category-description">
+                  Control how and when you receive notifications
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <h3>Notification Types</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="desktop-notifications" checked />
+                    <span class="checkmark"></span>
+                    Desktop Notifications
+                  </label>
+                  <p class="setting-description">
+                    Show system notifications when timer completes. Browser
+                    permission will be requested when enabled.
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="sound-notifications" checked />
+                    <span class="checkmark"></span>
+                    Sound Notifications
+                  </label>
+                  <p class="setting-description">
+                    Play a sound when timer phases complete
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Theme Settings -->
+            <div class="settings-category" id="category-theme">
+              <div class="category-header">
+                <h1>Theme</h1>
+                <p class="category-description">
+                  Customize the appearance and visual style of the application
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <h3>Color Theme</h3>
+
+                <div class="setting-item">
+                  <label for="theme-selector">Theme Mode:</label>
+                  <div class="theme-selector" id="theme-selector">
+                    <button
+                      class="theme-option"
+                      data-theme="auto"
+                      title="Auto (Follow System)"
+                    >
+                      <i class="ri-contrast-2-line"></i>
+                      <span>Auto</span>
+                    </button>
+                    <button
+                      class="theme-option"
+                      data-theme="light"
+                      title="Light Mode"
+                    >
+                      <i class="ri-sun-line"></i>
+                      <span>Light</span>
+                    </button>
+                    <button
+                      class="theme-option"
+                      data-theme="dark"
+                      title="Dark Mode"
+                    >
+                      <i class="ri-moon-line"></i>
+                      <span>Dark</span>
+                    </button>
+                  </div>
+                  <!-- Hidden select for backwards compatibility -->
+                  <select id="theme-select" style="display: none">
+                    <option value="auto">Auto (Follow System)</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                  <p class="setting-description">
+                    Choose your preferred color theme. Auto will automatically
+                    switch between light and dark mode based on your system
+                    preferences.
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>Timer Colors</h3>
+
+                <div class="setting-item">
+                  <label for="timer-theme-selector">Timer Theme:</label>
+                  <div class="timer-theme-grid" id="timer-theme-grid">
+                    <!-- Theme options will be populated by JavaScript -->
+                  </div>
+                  <p class="setting-description">
+                    Choose a color theme for your timer sessions. Some themes
+                    work only in light or dark mode.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Automation Settings -->
+            <div class="settings-category" id="category-automation">
+              <div class="category-header">
+                <h1>Automation</h1>
+                <p class="category-description">
+                  Configure automatic behaviors and smart features
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <h3>Timer Automation</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="auto-start-timer" checked />
+                    <span class="checkmark"></span>
+                    Auto-start Timer
+                  </label>
+                  <p class="setting-description">
+                    Automatically start the timer when manually skipping to the
+                    next session (using the skip button).
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="allow-continuous-sessions" />
+                    <span class="checkmark"></span>
+                    Allow Continuous Sessions
+                  </label>
+                  <p class="setting-description">
+                    Allow all sessions (focus, breaks, and long breaks) to
+                    continue beyond their timer duration. When enabled, you can
+                    manually decide when to move to the next phase instead of
+                    being automatically transitioned.
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>Smart Features</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="smart-pause" />
+                    <span class="checkmark"></span>
+                    Smart Pause (Auto-pause when inactive)
+                  </label>
+                  <p class="setting-description">
+                    Automatically pause the timer during focus sessions when no
+                    mouse or keyboard activity is detected, and resume when
+                    activity resumes. Only works during focus periods, not
+                    breaks.
+                  </p>
+                </div>
+
+                <div class="setting-item" id="smart-pause-timeout-setting">
+                  <label for="smart-pause-timeout"
+                    >Inactivity Timeout:
+                    <span id="timeout-value">30</span> seconds</label
+                  >
+                  <input
+                    type="range"
+                    id="smart-pause-timeout"
+                    min="5"
+                    max="120"
+                    value="30"
+                    step="5"
+                  />
+                  <div class="slider-labels">
+                    <span>5s</span>
+                    <span>2min</span>
+                  </div>
+                  <p class="setting-description">
+                    How long to wait before pausing during inactivity
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>Session Management</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="auto-save-sessions" checked />
+                    <span class="checkmark"></span>
+                    Auto-save Completed Sessions
+                  </label>
+                  <p class="setting-description">
+                    Automatically save session data when timer completes without
+                    manual confirmation.
+                  </p>
+                </div>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="prevent-interruptions" />
+                    <span class="checkmark"></span>
+                    Prevent Interruptions
+                  </label>
+                  <p class="setting-description">
+                    Show confirmation dialog before allowing session resets
+                    during active focus periods.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Goals Settings -->
+            <div class="settings-category" id="category-goals">
+              <div class="category-header">
+                <h1>Weekly Goals</h1>
+                <p class="category-description">
+                  Set your weekly focus time targets and productivity goals
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <h3>Focus Goals</h3>
+
+                <div class="setting-item">
+                  <label for="weekly-goal-minutes"
+                    >Weekly Goal (minutes):</label
+                  >
+                  <input
+                    type="number"
+                    id="weekly-goal-minutes"
+                    min="30"
+                    max="2400"
+                    value="125"
+                    step="5"
+                  />
+                  <p class="setting-description">
+                    Target focus time for Monday through Friday (default: 125
+                    minutes = 5 sessions of 25 minutes). Saturday and Sunday are
+                    excluded from calculation.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="settings-category" id="category-advanced">
+              <div class="category-header">
+                <h1>Advanced Settings</h1>
+                <p class="category-description">
+                  Danger zone and advanced configuration options
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <h3>System Integration</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="autostart-enabled" />
+                    <span class="checkmark"></span>
+                    Start with System
+                  </label>
+                  <p class="setting-description">
+                    Automatically start Presto when your computer boots up. The
+                    app will start minimized to the system tray.
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>Privacy & Analytics</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="analytics-enabled" />
+                    <span class="checkmark"></span>
+                    Enable Anonymous Statistics
+                  </label>
+                  <p class="setting-description">
+                    Help improve Presto by sharing anonymous usage statistics.
+                    No personal data is collected.
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>🔧 Developer Tools</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="debug-mode" />
+                    <span class="checkmark"></span>
+                    Debug Mode (3-second timers)
+                  </label>
+                  <p class="setting-description">
+                    Enable debug mode where all timers (focus, break, long
+                    break) are set to 3 seconds for rapid testing. Perfect for
+                    development and feature testing.
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-section danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p class="settings-description">
+                  These actions are irreversible and will permanently delete
+                  your data.
+                </p>
+
+                <div class="danger-actions">
+                  <button class="btn-danger" id="reset-all-data-btn">
+                    🗑️ Reset All Data
                   </button>
+                  <p class="danger-description">
+                    This will permanently delete all your Pomodoro sessions,
+                    tasks, statistics, and reset all settings to default. This
+                    action cannot be undone.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div class="settings-section">
-              <h3>Update Settings</h3>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="auto-check-updates" checked>
-                  <span class="checkmark"></span>
-                  Automatically check for updates
-                </label>
-                <p class="setting-description">Check for new versions automatically when the app starts and every hour.
-                  You'll be notified when updates are available.</p>
-              </div>
-
-              <div class="setting-item">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="include-prerelease">
-                  <span class="checkmark"></span>
-                  Include pre-release versions
-                </label>
-                <p class="setting-description">Also check for beta and pre-release versions. These may contain new
-                  features but could be less stable.</p>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h3>Release Information</h3>
-              <div class="release-info">
-                <p class="setting-description">
-                  Updates are distributed through GitHub releases.
-                  <a href="#" id="view-releases-link" class="external-link">
-                    <i class="ri-external-link-line"></i>
-                    View all releases on GitHub
-                  </a>
+            <!-- Updates Settings -->
+            <div class="settings-category" id="category-updates">
+              <div class="category-header">
+                <h1>App Updates</h1>
+                <p class="category-description">
+                  Manage application updates and version information
                 </p>
-                <div class="update-source">
-                  <span class="source-label">Update Source:</span>
-                  <code class="source-url" id="update-source-url">GitHub Releases</code>
+              </div>
+
+              <div class="settings-section">
+                <h3>Current Version</h3>
+                <div class="setting-item">
+                  <div class="version-info">
+                    <div class="current-version">
+                      <span class="version-label">Installed Version:</span>
+                      <span class="version-number" id="current-version"
+                        >0.1.0</span
+                      >
+                    </div>
+                    <div class="update-status" id="update-status">
+                      <span class="status-text">Checking for updates...</span>
+                    </div>
+                  </div>
+                  <div class="version-actions">
+                    <button class="btn btn-primary" id="check-updates-btn">
+                      <i class="ri-refresh-line"></i>
+                      Check for Updates
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h3>Update Settings</h3>
+
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="auto-check-updates" checked />
+                    <span class="checkmark"></span>
+                    Automatically check for updates
+                  </label>
+                  <p class="setting-description">
+                    Check for new versions automatically when the app starts and
+                    every hour. You'll be notified when updates are available.
+                  </p>
                 </div>
 
-                <div class="update-progress" id="update-progress" style="display: none;">
-                  <div class="progress-info">
-                    <h4 id="progress-title">Checking for updates...</h4>
-                    <p id="progress-description">Please wait while we check for the latest version.</p>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
-                    <span class="progress-text" id="progress-text">0%</span>
-                  </div>
+                <div class="setting-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="include-prerelease" />
+                    <span class="checkmark"></span>
+                    Include pre-release versions
+                  </label>
+                  <p class="setting-description">
+                    Also check for beta and pre-release versions. These may
+                    contain new features but could be less stable.
+                  </p>
                 </div>
+              </div>
 
-                <div class="update-info" id="update-info" style="display: none;">
-                  <div class="update-details">
-                    <h4>Update Available</h4>
-                    <div class="version-comparison">
-                      <div class="version-item">
-                        <span class="version-label">Current:</span>
-                        <span class="version-value" id="current-version-display">0.1.0</span>
+              <div class="settings-section">
+                <h3>Release Information</h3>
+                <div class="release-info">
+                  <p class="setting-description">
+                    Updates are distributed through GitHub releases.
+                    <a href="#" id="view-releases-link" class="external-link">
+                      <i class="ri-external-link-line"></i>
+                      View all releases on GitHub
+                    </a>
+                  </p>
+                  <div class="update-source">
+                    <span class="source-label">Update Source:</span>
+                    <code class="source-url" id="update-source-url"
+                      >GitHub Releases</code
+                    >
+                  </div>
+
+                  <div
+                    class="update-progress"
+                    id="update-progress"
+                    style="display: none"
+                  >
+                    <div class="progress-info">
+                      <h4 id="progress-title">Checking for updates...</h4>
+                      <p id="progress-description">
+                        Please wait while we check for the latest version.
+                      </p>
+                    </div>
+                    <div class="progress-bar">
+                      <div
+                        class="progress-fill"
+                        id="progress-fill"
+                        style="width: 0%"
+                      ></div>
+                      <span class="progress-text" id="progress-text">0%</span>
+                    </div>
+                  </div>
+
+                  <div
+                    class="update-info"
+                    id="update-info"
+                    style="display: none"
+                  >
+                    <div class="update-details">
+                      <h4>Update Available</h4>
+                      <div class="version-comparison">
+                        <div class="version-item">
+                          <span class="version-label">Current:</span>
+                          <span
+                            class="version-value"
+                            id="current-version-display"
+                            >0.1.0</span
+                          >
+                        </div>
+                        <div class="version-arrow">→</div>
+                        <div class="version-item">
+                          <span class="version-label">Latest:</span>
+                          <span
+                            class="version-value"
+                            id="latest-version-display"
+                            >0.2.0</span
+                          >
+                        </div>
                       </div>
-                      <div class="version-arrow">→</div>
-                      <div class="version-item">
-                        <span class="version-label">Latest:</span>
-                        <span class="version-value" id="latest-version-display">0.2.0</span>
+                      <div class="update-actions">
+                        <button
+                          class="btn btn-primary"
+                          id="download-update-btn"
+                        >
+                          <i class="ri-download-line"></i>
+                          Download & Install
+                        </button>
+                        <button class="btn btn-secondary" id="skip-update-btn">
+                          <i class="ri-close-line"></i>
+                          Skip This Version
+                        </button>
                       </div>
                     </div>
-                    <div class="update-actions">
-                      <button class="btn btn-primary" id="download-update-btn">
-                        <i class="ri-download-line"></i>
-                        Download & Install
-                      </button>
-                      <button class="btn btn-secondary" id="skip-update-btn">
-                        <i class="ri-close-line"></i>
-                        Skip This Version
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Settings Actions -->
-          <div class="settings-actions setting-item">
-            <div class="auto-save-info">
-              <span class="auto-save-text">✓ Settings are saved automatically</span>
+            <!-- Settings Actions -->
+            <div class="settings-actions setting-item">
+              <div class="auto-save-info">
+                <span class="auto-save-text"
+                  >✓ Settings are saved automatically</span
+                >
+              </div>
+              <button class="btn-secondary">Reset to Defaults</button>
             </div>
-            <button class="btn-secondary">Reset to Defaults</button>
           </div>
-
         </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <!-- Session Edit Modal -->
-  <div class="modal-overlay" id="session-modal-overlay">
-    <div class="session-modal" id="session-modal">
-      <div class="modal-header">
-        <h3 id="session-modal-title">Add Session</h3>
-        <button class="modal-close-btn" id="close-session-modal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+    <!-- Session Edit Modal -->
+    <div class="modal-overlay" id="session-modal-overlay">
+      <div class="session-modal" id="session-modal">
+        <div class="modal-header">
+          <h3 id="session-modal-title">Add Session</h3>
+          <button class="modal-close-btn" id="close-session-modal">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <form class="session-form" id="session-form">
+          <div class="form-group">
+            <label for="session-duration">Duration (minutes)</label>
+            <input
+              type="number"
+              id="session-duration"
+              name="duration"
+              min="1"
+              max="120"
+              value="25"
+            />
+          </div>
+          <div class="form-group">
+            <label for="session-start-time">Start Time</label>
+            <input
+              type="time"
+              id="session-start-time"
+              name="startTime"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="session-end-time">End Time</label>
+            <input type="time" id="session-end-time" name="endTime" required />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-session-btn">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn-danger"
+              id="delete-session-btn"
+              style="display: none"
+            >
+              Delete
+            </button>
+            <button type="submit" class="btn-primary" id="save-session-btn">
+              Save Session
+            </button>
+          </div>
+        </form>
       </div>
-      <form class="session-form" id="session-form">
-        <div class="form-group">
-          <label for="session-duration">Duration (minutes)</label>
-          <input type="number" id="session-duration" name="duration" min="1" max="120" value="25">
-        </div>
-        <div class="form-group">
-          <label for="session-start-time">Start Time</label>
-          <input type="time" id="session-start-time" name="startTime" required>
-        </div>
-        <div class="form-group">
-          <label for="session-end-time">End Time</label>
-          <input type="time" id="session-end-time" name="endTime" required>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="cancel-session-btn">Cancel</button>
-          <button type="button" class="btn-danger" id="delete-session-btn" style="display: none;">Delete</button>
-          <button type="submit" class="btn-primary" id="save-session-btn">Save Session</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <!-- XLSX Library for Excel Export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-</body>
-
+    <!-- XLSX Library for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </body>
 </html>

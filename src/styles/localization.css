@@ -1,0 +1,74 @@
+/* Language Switcher Styles */
+.locale-switcher-container {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.locale-switcher-container label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.locale-switcher {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.locale-switcher:hover {
+  border-color: var(--primary-color);
+}
+
+.locale-switcher:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+/* Settings section language switcher */
+.settings-section .locale-switcher {
+  max-width: 200px;
+}
+
+/* Language loading indicator */
+.language-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.language-loading::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border: 2px solid var(--text-secondary);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive language switcher */
+@media (max-width: 768px) {
+  .locale-switcher {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
