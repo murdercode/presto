@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json;
 use std::collections::HashMap;
 use std::fs;
 use std::sync::{Arc, LazyLock, Mutex};
@@ -8,6 +9,7 @@ use base64::{Engine as _, engine::general_purpose};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
+#[cfg(not(target_os = "ios"))]
 use tauri_plugin_aptabase::EventTracker;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
@@ -397,7 +399,10 @@ async fn save_session_data(session: PomodoroSession, app: AppHandle) -> Result<(
             "total_focus_time": session.total_focus_time,
             "current_session": session.current_session
         }));
-        let _ = app.track_event("session_saved", properties);
+        #[cfg(not(target_os = "ios"))]
+        {
+            let _ = app.track_event("session_saved", properties);
+        }
     }
 
     Ok(())
@@ -457,7 +462,10 @@ async fn save_tasks(tasks: Vec<Task>, app: AppHandle) -> Result<(), String> {
 
     // Track tasks saved analytics (if enabled)
     if are_analytics_enabled(&app).await {
-        let _ = app.track_event("tasks_saved", None);
+        #[cfg(not(target_os = "ios"))]
+        {
+            let _ = app.track_event("tasks_saved", None);
+        }
     }
 
     Ok(())
@@ -812,7 +820,10 @@ async fn save_manual_sessions(sessions: Vec<ManualSession>, app: AppHandle) -> R
         let properties = Some(serde_json::json!({
             "session_count": sessions.len()
         }));
-        let _ = app.track_event("manual_sessions_saved", properties);
+        #[cfg(not(target_os = "ios"))]
+        {
+            let _ = app.track_event("manual_sessions_saved", properties);
+        }
     }
 
     Ok(())
@@ -881,7 +892,7 @@ async fn get_manual_sessions_for_date(date: String, app: AppHandle) -> Result<Ve
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::async_runtime::block_on(async {
-        tauri::Builder::default()
+        let mut builder = tauri::Builder::default()
             .plugin(tauri_plugin_opener::init())
             .plugin(tauri_plugin_global_shortcut::Builder::new().build())
             .plugin(tauri_plugin_dialog::init())
@@ -892,8 +903,14 @@ pub fn run() {
             ))
             .plugin(tauri_plugin_updater::Builder::new().build())
             .plugin(tauri_plugin_process::init())
-            .plugin(tauri_plugin_oauth::init())
-            .plugin(tauri_plugin_aptabase::Builder::new("A-EU-9457123106").build())
+            .plugin(tauri_plugin_oauth::init());
+
+        #[cfg(not(target_os = "ios"))]
+        {
+            builder = builder.plugin(tauri_plugin_aptabase::Builder::new("A-EU-9457123106").build());
+        }
+
+        builder
             .invoke_handler(tauri::generate_handler![
                 greet,
                 save_session_data,
@@ -936,7 +953,10 @@ pub fn run() {
                 let app_handle_analytics = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
                     if are_analytics_enabled(&app_handle_analytics).await {
-                        let _ = app_handle_analytics.track_event("app_started", None);
+                        #[cfg(not(target_os = "ios"))]
+                        {
+                            let _ = app_handle_analytics.track_event("app_started", None);
+                        }
                     }
                 });
 
@@ -975,36 +995,51 @@ pub fn run() {
                     .on_menu_event(move |_tray, event| match event.id.as_ref() {
                         "show" => {
                             if let Some(window) = app_handle.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "start_session" => {
                             if let Some(window) = app_handle.get_webview_window("main") {
                                 let _ = window.emit("tray-start-session", ());
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "pause" => {
                             if let Some(window) = app_handle.get_webview_window("main") {
                                 let _ = window.emit("tray-pause", ());
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "skip" => {
                             if let Some(window) = app_handle.get_webview_window("main") {
                                 let _ = window.emit("tray-skip", ());
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "cancel" => {
                             if let Some(window) = app_handle.get_webview_window("main") {
                                 let _ = window.emit("tray-cancel", ());
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "quit" => {
@@ -1015,8 +1050,11 @@ pub fn run() {
                     .on_tray_icon_event(move |_tray, event| {
                         if let TrayIconEvent::Click { .. } = event {
                             if let Some(window) = app_handle_for_click.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                                #[cfg(not(target_os = "ios"))]
+                                {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                     })
@@ -1068,8 +1106,11 @@ pub fn run() {
                 tauri::RunEvent::Exit { .. } => {
                     // Always track app exit event regardless of analytics settings
                     // since this is the final event and useful for crash detection
-                    let _ = app_handle.track_event("app_exited", None);
-                    app_handle.flush_events_blocking();
+                    #[cfg(not(target_os = "ios"))]
+                    {
+                        let _ = app_handle.track_event("app_exited", None);
+                        app_handle.flush_events_blocking();
+                    }
                 }
                 _ => {}
             });
