@@ -1140,14 +1140,14 @@ pub fn run() {
                     let _ = app_handle.track_event("app_exited", None);
                     app_handle.flush_events_blocking();
                 }
-            
+                
+                #[cfg(target_os = "macos")]
                 tauri::RunEvent::Reopen { .. } => {
                     // When the user clicks on the dock icon, show the window
                     if let Some(window) = app_handle.get_webview_window("main") {
                         let _ = window.show();
                         let _ = window.set_focus();
                         // If the app was previously hidden from dock, restore it
-                        #[cfg(target_os = "macos")]
                         {
                             let app_handle_clone = app_handle.clone();
                             tauri::async_runtime::spawn(async move {
