@@ -341,7 +341,6 @@ async fn start_activity_monitoring(app: AppHandle, timeout_seconds: u64) -> Resu
         {
             monitor.start_monitoring()?;
         }
-
         #[cfg(not(target_os = "macos"))]
         {
             return Err("Activity monitoring is only supported on macOS".to_string());
@@ -1141,13 +1140,14 @@ pub fn run() {
                     let _ = app_handle.track_event("app_exited", None);
                     app_handle.flush_events_blocking();
                 }
+                
+                #[cfg(target_os = "macos")]
                 tauri::RunEvent::Reopen { .. } => {
                     // When the user clicks on the dock icon, show the window
                     if let Some(window) = app_handle.get_webview_window("main") {
                         let _ = window.show();
                         let _ = window.set_focus();
                         // If the app was previously hidden from dock, restore it
-                        #[cfg(target_os = "macos")]
                         {
                             let app_handle_clone = app_handle.clone();
                             tauri::async_runtime::spawn(async move {
@@ -1376,14 +1376,14 @@ async fn set_dock_visibility(app: AppHandle, visible: bool) -> Result<(), String
             set_dock_visibility_native(visible);
         })
         .map_err(|e| format!("Failed to run on main thread: {}", e))?;
+        Ok(())
     }
-
     #[cfg(not(target_os = "macos"))]
     {
-        return Err("Dock visibility is only supported on macOS".to_string());
+        let _ = app; // silence unused variable warning
+        let _ = visible; // silence unused variable warning
+        Err("Dock visibility is only supported on macOS".to_string())
     }
-
-    Ok(())
 }
 
 #[cfg(target_os = "macos")]
@@ -1440,10 +1440,11 @@ async fn set_status_bar_visibility(_app: AppHandle, visible: bool) -> Result<(),
             }
         }
     }
-
     #[cfg(not(target_os = "macos"))]
     {
-        return Err("Status bar visibility is only supported on macOS".to_string());
+        let _ = _app; // silence unused variable warning
+        let _ = visible; // silence unused variable warning
+        Err("Status bar visibility is only supported on macOS".to_string())
     }
 }
 

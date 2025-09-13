@@ -21,9 +21,11 @@ jobs:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin --bundles app'
             arch: 'aarch64'
-          - platform: 'macos-latest' 
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin --bundles app'
             arch: 'x86_64'
+          - platform: 'windows-2025'
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
