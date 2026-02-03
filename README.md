@@ -1,3 +1,5 @@
+Due to numerous commitments, the project has unfortunately been abandoned.
+
 <img src="https://github.com/murdercode/presto/raw/HEAD/art/banner.png" width="100%" alt="Presto banner" style="max-width: 100%;">
 
 # Presto - Pomodoro Timer
