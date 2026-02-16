@@ -297,7 +297,7 @@ export class PomodoroTimer {
                             }
                             break;
                         case 'KeyH':
-                            if (e.ctrlKey || e.metaKey) {
+                            if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
                                 e.preventDefault();
                                 this.showHistoryModal();
                             }
